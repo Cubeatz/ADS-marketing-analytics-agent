@@ -27,6 +27,8 @@ powershell -ExecutionPolicy Bypass -File scripts\start.ps1
 
 或仅运行问卷：`powershell -File scripts\onboard.ps1`
 
+**GitHub 仓库：** https://github.com/Cubeatz/ADS-marketing-analytics-agent
+
 ## 快速开始（配置完成后）
 
 ```powershell

@@ -18,10 +18,14 @@ powershell -ExecutionPolicy Bypass -File scripts\setup-github.ps1
 powershell -ExecutionPolicy Bypass -File scripts\setup-github.ps1 -Visibility public
 ```
 
+### 仓库地址
+
+https://github.com/Cubeatz/ADS-marketing-analytics-agent
+
 ### 克隆到远端电脑
 
 ```powershell
-git clone https://github.com/<你的用户名>/marketing-analytics-agent.git
-cd marketing-analytics-agent
+git clone https://github.com/Cubeatz/ADS-marketing-analytics-agent.git
+cd ADS-marketing-analytics-agent
 powershell -ExecutionPolicy Bypass -File scripts\start.ps1
 ```
