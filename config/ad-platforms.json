@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "description": "当前问卷第 1 题可选择的平台目录。这里只放已支持平台，未支持平台记录在 docs/AD-PLATFORMS.md。",
+  "version": "1.1",
+  "description": "首次配置第 1 题可选择的平台目录。这里只放当前可配置的平台；暂不支持平台及原因见 docs/AD-PLATFORMS.md。",
   "platforms": [
     {
       "letter": "A",
@@ -57,6 +57,22 @@
       "category": "广告投放",
       "supported": true,
       "mcp": "mcp-reddit-ads（npm 自托管）"
+    },
+    {
+      "letter": "H",
+      "id": "tiktok_ads",
+      "name": "TikTok Ads",
+      "category": "广告投放",
+      "supported": true,
+      "mcp": "TikTok Ads MCP Server（官方；需官方 MCP/OAuth 入口）"
+    },
+    {
+      "letter": "I",
+      "id": "amazon_ads",
+      "name": "Amazon Ads",
+      "category": "广告投放",
+      "supported": true,
+      "mcp": "Amazon Ads MCP Server（官方 open beta；需 API 凭证/端点）"
     }
   ]
 }

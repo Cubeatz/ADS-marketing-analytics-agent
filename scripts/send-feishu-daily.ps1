@@ -3,10 +3,18 @@
     [string]$Date = (Get-Date).AddDays(-1).ToString("yyyy-MM-dd"),
 
     [Parameter(Mandatory = $false)]
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot)
+    [string]$ProjectRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) { $ProjectRoot = Split-Path -Parent $PSScriptRoot }
+
+try {
+    [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
+    [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    $OutputEncoding = [Console]::OutputEncoding
+    $env:PYTHONIOENCODING = "utf-8"
+} catch { }
 
 $feishuConfigPath = Join-Path $ProjectRoot "config\feishu.json"
 $summaryPath = Join-Path $ProjectRoot "reports\$Date\data-summary.json"

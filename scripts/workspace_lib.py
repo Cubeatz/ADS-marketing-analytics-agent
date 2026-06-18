@@ -1,4 +1,4 @@
-"""工作区配置：路径解析、temp 分层目录、投递模式。"""
+"""Workspace configuration helpers: paths, temp layout, and delivery settings."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def load_workspace(project_root: Path) -> dict[str, Any]:
 
 
 def default_workspace_root() -> Path:
-    """桌面 marketing-analytics-agent 默认路径（兼容中文「桌面」）。"""
+    """Default workspace folder on Desktop, including Chinese Windows desktop names."""
     home = Path.home()
     for desktop in (home / "Desktop", home / "桌面"):
         if desktop.is_dir():
@@ -27,7 +27,6 @@ def default_workspace_root() -> Path:
 
 
 def workspace_data_root(project_root: Path, workspace: dict[str, Any]) -> Path:
-    """报告与 temp 的实际根目录。"""
     dirs = workspace.get("directories") or {}
     raw = (dirs.get("workspace_root") or "").strip()
     if raw:
@@ -36,7 +35,7 @@ def workspace_data_root(project_root: Path, workspace: dict[str, Any]) -> Path:
 
 
 def detect_prior_usage(root: Path) -> dict[str, Any]:
-    """检测文件夹是否已有 Agent 使用记录。"""
+    """Detect whether a folder already contains agent-generated state."""
     markers: list[str] = []
     root = root.expanduser().resolve()
     ws_path = root / "config" / "workspace.json"
@@ -61,18 +60,10 @@ def detect_prior_usage(root: Path) -> dict[str, Any]:
                     markers.append(f"已有 {name}/ 数据")
             except OSError:
                 pass
-    return {
-        "path": str(root),
-        "has_prior": len(markers) > 0,
-        "markers": markers,
-    }
+    return {"path": str(root), "has_prior": len(markers) > 0, "markers": markers}
 
 
-def initialize_workspace_root(
-    workspace_root: Path,
-    template_root: Path | None = None,
-) -> Path:
-    """创建桌面工作区骨架：config、temp、reports、output 及示例配置。"""
+def initialize_workspace_root(workspace_root: Path, template_root: Path | None = None) -> Path:
     workspace_root = workspace_root.expanduser().resolve()
     workspace_root.mkdir(parents=True, exist_ok=True)
     for sub in ("config", "reports", "output/documents"):
@@ -82,12 +73,10 @@ def initialize_workspace_root(
     config_dir = workspace_root / "config"
     for example in ("thresholds.example.json", "accounts.example.json", "feishu.example.json"):
         src = template_root / "config" / example
-        dst_name = example.replace(".example", "")
-        dst = config_dir / dst_name
+        dst = config_dir / example.replace(".example", "")
         if src.exists() and not dst.exists():
             shutil.copy2(src, dst)
 
-    # temp 顶层分类目录占位
     for cat in ("raw", "processed", "cache", "logs", "exports"):
         (workspace_root / "temp" / cat).mkdir(parents=True, exist_ok=True)
 
@@ -95,9 +84,9 @@ def initialize_workspace_root(
 
 
 def resolve_path(project_root: Path, workspace: dict[str, Any], rel: str) -> Path:
-    """相对路径基于 workspace_data_root。"""
-    root = workspace_data_root(project_root, workspace)
-    return root / rel
+    return workspace_data_root(project_root, workspace) / rel
+
+
 def is_onboarding_complete(workspace: dict[str, Any]) -> bool:
     return bool((workspace.get("onboarding") or {}).get("completed"))
 
@@ -124,8 +113,15 @@ def enabled_platforms(workspace: dict[str, Any]) -> list[str]:
     if enabled:
         return enabled
     return temp_config(workspace).get("platforms") or [
-        "google_ads", "meta_ads", "adjust", "appsflyer",
-        "linkedin_ads", "bing_ads", "reddit_ads",
+        "google_ads",
+        "meta_ads",
+        "adjust",
+        "appsflyer",
+        "linkedin_ads",
+        "bing_ads",
+        "reddit_ads",
+        "tiktok_ads",
+        "amazon_ads",
     ]
 
 
@@ -143,13 +139,11 @@ def temp_category_path(
     platform: str | None = None,
     subcategory: str | None = None,
 ) -> Path:
-    """category: raw | processed | cache | logs | exports"""
     data_root = workspace_data_root(project_root, workspace)
     cfg = temp_config(workspace)
     categories = cfg.get("categories") or {}
     cat_cfg = categories.get(category)
     if not cat_cfg:
-        # 兼容旧配置
         if category == "raw":
             base = data_root / "temp" / "raw" / date
             if platform:
@@ -175,32 +169,15 @@ def temp_category_path(
     return data_root / rel
 
 
-def temp_raw_path(
-    project_root: Path,
-    workspace: dict[str, Any],
-    date: str,
-    platform: str,
-    data_category: str,
-) -> Path:
+def temp_raw_path(project_root: Path, workspace: dict[str, Any], date: str, platform: str, data_category: str) -> Path:
     return temp_category_path(project_root, workspace, "raw", date, platform, data_category)
 
 
-def temp_processed_path(
-    project_root: Path,
-    workspace: dict[str, Any],
-    date: str,
-    platform: str,
-    data_category: str,
-) -> Path:
+def temp_processed_path(project_root: Path, workspace: dict[str, Any], date: str, platform: str, data_category: str) -> Path:
     return temp_category_path(project_root, workspace, "processed", date, platform, data_category)
 
 
-def temp_cache_path(
-    project_root: Path,
-    workspace: dict[str, Any],
-    date: str,
-    platform: str,
-) -> Path:
+def temp_cache_path(project_root: Path, workspace: dict[str, Any], date: str, platform: str) -> Path:
     return temp_category_path(project_root, workspace, "cache", date, platform)
 
 
@@ -208,23 +185,15 @@ def temp_logs_path(project_root: Path, workspace: dict[str, Any], date: str) -> 
     return temp_category_path(project_root, workspace, "logs", date)
 
 
-def temp_exports_path(
-    project_root: Path,
-    workspace: dict[str, Any],
-    date: str,
-    platform: str,
-    data_category: str,
-) -> Path:
+def temp_exports_path(project_root: Path, workspace: dict[str, Any], date: str, platform: str, data_category: str) -> Path:
     return temp_category_path(project_root, workspace, "exports", date, platform, data_category)
 
 
 def ensure_temp_layout(project_root: Path, workspace: dict[str, Any], date: str) -> list[Path]:
-    """创建当日 temp 全部分类子目录，返回创建的目录列表。"""
     data_root = workspace_data_root(project_root, workspace)
     created: list[Path] = []
     cfg = temp_config(workspace)
     if not cfg:
-        # 最小兼容
         for p in ["raw", "processed", "cache", "logs", "exports"]:
             for plat in enabled_platforms(workspace):
                 d = data_root / "temp" / p / date / plat
@@ -311,6 +280,5 @@ def sync_legacy_feishu_json(project_root: Path, workspace: dict[str, Any]) -> No
         json.dump(payload, f, ensure_ascii=False, indent=2)
 
 
-# 兼容旧名
 def raw_platform_dir(project_root: Path, workspace: dict[str, Any], date: str, platform: str) -> Path:
     return temp_raw_path(project_root, workspace, date, platform, "misc")

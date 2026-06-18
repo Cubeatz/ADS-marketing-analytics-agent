@@ -1,4 +1,4 @@
-# 本地配置（含密钥，勿提交）
+# 本地配置（可能包含密钥，不要提交）
 config/accounts.json
 config/thresholds.json
 config/feishu.json
@@ -7,7 +7,7 @@ config/onboarding-extras.json
 config/onboarding-draft.json
 .cursor/mcp.json
 
-# 平台拉取原始数据与输出
+# 平台拉取的原始数据与输出
 temp/
 output/
 reports/

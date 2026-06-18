@@ -1,11 +1,19 @@
 ﻿#Requires -Version 5.1
 param(
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
+    [string]$ProjectRoot = "",
     [string]$Answers = "",
     [switch]$Interactive
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) { $ProjectRoot = Split-Path -Parent $PSScriptRoot }
+
+try {
+    [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
+    [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    $OutputEncoding = [Console]::OutputEncoding
+    $env:PYTHONIOENCODING = "utf-8"
+} catch { }
 
 & "$PSScriptRoot\check-environment.ps1" -ProjectRoot $ProjectRoot -Quiet
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -133,6 +141,14 @@ if ($ws.platforms.bing_ads.enabled) {
 if ($ws.platforms.reddit_ads.enabled) {
     $steps.Add(@{ key = "reddit_account_id"; prompt = "Reddit Ads 账户 ID"; skip = "" })
 }
+if ($ws.platforms.tiktok_ads.enabled) {
+    $steps.Add(@{ key = "tiktok_advertiser_id"; prompt = "TikTok Ads Advertiser ID"; skip = "" })
+    Write-Host "TikTok Ads：如 IDE 需要 URL 配置，请设置 TIKTOK_ADS_MCP_URL" -ForegroundColor DarkGray
+}
+if ($ws.platforms.amazon_ads.enabled) {
+    $steps.Add(@{ key = "amazon_ads_profile_id"; prompt = "Amazon Ads Profile ID"; skip = "" })
+    Write-Host "Amazon Ads：请准备 Amazon Ads API 凭证，并设置 AMAZON_ADS_MCP_URL" -ForegroundColor DarkGray
+}
 
 $steps.Add(@{ key = "app_name"; prompt = "App 名称"; skip = "我的App" })
 $steps.Add(@{ key = "operator_name"; prompt = "运营负责人姓名"; skip = "" })
@@ -230,6 +246,16 @@ $accounts = @{
         adjust = @{
             app_name = $extras["app_name"]
             api_token_env = "ADJUST_API_TOKEN"
+        }
+        tiktok_ads = @{
+            advertiser_id = $extras["tiktok_advertiser_id"]
+            currency = $currency
+            timezone = $tz
+        }
+        amazon_ads = @{
+            profile_id = $extras["amazon_ads_profile_id"]
+            currency = $currency
+            timezone = $tz
         }
     })
     defaults = @{

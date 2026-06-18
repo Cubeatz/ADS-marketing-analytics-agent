@@ -9,6 +9,11 @@ from pathlib import Path
 
 from workspace_lib import ensure_temp_layout, is_onboarding_complete, load_workspace
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="创建 temp 分类子目录")

@@ -1,9 +1,18 @@
 ﻿param(
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
+    [string]$ProjectRoot = "",
     [string]$Date = ""
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) { $ProjectRoot = Split-Path -Parent $PSScriptRoot }
+
+try {
+    [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
+    [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    $OutputEncoding = [Console]::OutputEncoding
+    $env:PYTHONIOENCODING = "utf-8"
+} catch { }
+
 $wsPath = Join-Path $ProjectRoot "config\workspace.json"
 
 if (-not (Test-Path $wsPath)) {
@@ -56,7 +65,7 @@ if ($ws.schedule.usage_mode -eq "scheduled" -and $ws.schedule.weekdays_only) {
     }
 }
 
-$dates = Get-ReportDates -Workspace $ws -OverrideDate $Date
+$dates = @(Get-ReportDates -Workspace $ws -OverrideDate $Date)
 
 Write-Host "开始生成营销日报（时区 $tz，计划时间 $time）..."
 Write-Host "本次数据日期: $($dates -join ', ')"
@@ -67,7 +76,8 @@ foreach ($d in $dates) {
 if ($dates.Count -gt 1) {
     Write-Host "请在 IDE 中对 Agent 说：「按 workspace 配置生成这些日期的营销日报并逐日投递：$($dates -join ', ')」"
 } else {
-    Write-Host "请在 IDE 中对 Agent 说：「按 workspace 配置生成 $($dates[0]) 的营销日报并投递」"
+    $reportDate = @($dates)[0]
+    Write-Host "请在 IDE 中对 Agent 说：「按 workspace 配置生成 $reportDate 的营销日报并投递」"
 }
 Write-Host ""
 Write-Host "若已配置 MCP 全自动流程，Agent 将："

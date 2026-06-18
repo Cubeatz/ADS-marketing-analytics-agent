@@ -1,25 +1,17 @@
 #!/usr/bin/env bash
-# 营销数据分析 Agent — macOS/Linux 安装脚本
 set -euo pipefail
 
 IDE="${1:-all}"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-expand_env() {
-  local file="$1"
-  python3 - "$file" <<'PY'
-import os, re, sys
-path = sys.argv[1]
-text = open(path, encoding="utf-8").read()
-def repl(m):
-    return os.environ.get(m.group(1), m.group(0))
-print(re.sub(r'\$\{(\w+)\}', repl, text), end="")
-PY
-}
+PY="${PYTHON:-python3}"
+if ! command -v "$PY" >/dev/null 2>&1; then
+  PY=python
+fi
 
 core_json() {
   local http_field="${1:-url}"
-  python3 - "$PROJECT_ROOT" "$http_field" <<'PY'
+  "$PY" - "$PROJECT_ROOT" "$http_field" <<'PY'
 import json, os, re, sys
 from pathlib import Path
 
@@ -36,15 +28,18 @@ mapping = {
     "linkedin_ads": "linkedin-ads",
     "bing_ads": "bing-ads",
     "reddit_ads": "reddit-ads",
+    "tiktok_ads": "tiktok-ads",
+    "amazon_ads": "amazon-ads",
 }
 selected = []
 ws_path = root / "config/workspace.json"
 if ws_path.exists():
     try:
         ws = json.loads(ws_path.read_text(encoding="utf-8"))
-        for key, cfg in (ws.get("platforms") or {}).items():
-            if cfg.get("enabled") and key in mapping:
-                selected.append(mapping[key])
+        if not (ws.get("onboarding") or {}).get("completed"):
+            selected = list(mapping.values())
+        else:
+            selected = [mapping[k] for k, v in (ws.get("platforms") or {}).items() if v.get("enabled") and k in mapping]
     except Exception:
         pass
 if not selected:
@@ -66,7 +61,7 @@ PY
 }
 
 core_toml() {
-  python3 - "$PROJECT_ROOT" <<'PY'
+  "$PY" - "$PROJECT_ROOT" <<'PY'
 import json, os, re, sys
 from pathlib import Path
 
@@ -82,19 +77,24 @@ mapping = {
     "linkedin_ads": "linkedin-ads",
     "bing_ads": "bing-ads",
     "reddit_ads": "reddit-ads",
+    "tiktok_ads": "tiktok-ads",
+    "amazon_ads": "amazon-ads",
 }
 selected = []
 ws_path = root / "config/workspace.json"
 if ws_path.exists():
     try:
         ws = json.loads(ws_path.read_text(encoding="utf-8"))
-        selected = [mapping[k] for k, v in (ws.get("platforms") or {}).items() if v.get("enabled") and k in mapping]
+        if not (ws.get("onboarding") or {}).get("completed"):
+            selected = list(mapping.values())
+        else:
+            selected = [mapping[k] for k, v in (ws.get("platforms") or {}).items() if v.get("enabled") and k in mapping]
     except Exception:
         pass
 if not selected:
     selected = list(mapping.values())
 lines = [
-    "# 营销数据分析 MCP — Codex 配置片段",
+    "# 营销数据分析 MCP - Codex 配置片段",
     "# 由 scripts/install.sh 基于 integrations/mcp-servers.core.json 生成",
     "",
 ]
@@ -122,32 +122,8 @@ print("\n".join(lines))
 PY
 }
 
-merge_json_mcp() {
-  local target="$1"
-  local template="$2"
-  mkdir -p "$(dirname "$target")"
-  local tmp
-  tmp="$(mktemp)"
-  expand_env "$template" > "$tmp"
-  if [[ -f "$target" ]]; then
-    python3 - "$target" "$tmp" <<'PY'
-import json, sys
-target, template = sys.argv[1], sys.argv[2]
-with open(target) as f: cfg = json.load(f)
-with open(template) as f: tpl = json.load(f)
-cfg.setdefault("mcpServers", {})
-cfg["mcpServers"].update(tpl.get("mcpServers", {}))
-with open(target, "w") as f: json.dump(cfg, f, indent=2)
-PY
-  else
-    cp "$tmp" "$target"
-  fi
-  rm -f "$tmp"
-  echo "  OK $target"
-}
-
 ensure_configs() {
-  for pair in "accounts.example.json:accounts.json" "thresholds.example.json:thresholds.json" "feishu.example.json:feishu.json"; do
+  for pair in "accounts.example.json:accounts.json" "thresholds.example.json:thresholds.json" "feishu.example.json:feishu.json" "workspace.example.json:workspace.json"; do
     src="${pair%%:*}"
     dst="${pair##*:}"
     if [[ ! -f "$PROJECT_ROOT/config/$dst" ]]; then
@@ -155,80 +131,100 @@ ensure_configs() {
       echo "  已创建 config/$dst"
     fi
   done
-  mkdir -p "$PROJECT_ROOT/reports"
+  mkdir -p "$PROJECT_ROOT/reports" "$PROJECT_ROOT/output/documents"
 }
 
-install_cursor() {
-  mkdir -p "$PROJECT_ROOT/.cursor"
-  core_json url > "$PROJECT_ROOT/.cursor/mcp.json"
-  echo "  OK $PROJECT_ROOT/.cursor/mcp.json"
-}
+install_manual_json_ide() {
+  local name="$1"
+  local folder="$2"
+  local hint="$3"
+  local dir="$PROJECT_ROOT/integrations/$folder"
+  mkdir -p "$dir"
+  core_json url > "$dir/mcp.json"
+  cat > "$dir/README.md" <<EOF
+# $name MCP 配置
 
-install_codex() {
-  mkdir -p "$PROJECT_ROOT/.codex" "$HOME/.codex"
-  core_toml > "$PROJECT_ROOT/.codex/config.toml"
-  if [[ ! -f "$HOME/.codex/config.toml" ]]; then
-    cp "$PROJECT_ROOT/.codex/config.toml" "$HOME/.codex/config.toml"
-  elif ! grep -q '\[mcp_servers.google-ads\]' "$HOME/.codex/config.toml"; then
-    cat "$PROJECT_ROOT/.codex/config.toml" >> "$HOME/.codex/config.toml"
-  fi
-  [[ -f "$HOME/.codex/AGENTS.md" ]] || cp "$PROJECT_ROOT/AGENTS.md" "$HOME/.codex/AGENTS.md"
-  echo "  OK Codex config"
-}
+本脚本已生成可复制的 MCP JSON：
 
-install_antigravity() {
-  mkdir -p "$HOME/.gemini/antigravity"
-  core_json serverUrl > "$HOME/.gemini/antigravity/mcp_config.json"
-  echo "  OK $HOME/.gemini/antigravity/mcp_config.json"
-}
+\`\`\`
+$dir/mcp.json
+\`\`\`
 
-install_claude_desktop() {
-  local dest
-  if [[ "$(uname)" == "Darwin" ]]; then
-    dest="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
-  else
-    dest="${XDG_CONFIG_HOME:-$HOME/.config}/Claude/claude_desktop_config.json"
-  fi
-  mkdir -p "$(dirname "$dest")"
-  core_json url > "$dest"
-  echo "  OK $dest"
-}
+打开 $name 的 MCP / 工具 / 服务配置页面，手动粘贴 \`mcp.json\` 中的 \`mcpServers\` 配置，保存后重启 IDE，并完成所选平台的 OAuth / API Token 配置。
 
-install_claude() {
-  mkdir -p "$HOME/.claude"
-  core_json url > "$HOME/.claude/settings.json"
-  echo "  OK $HOME/.claude/settings.json"
-}
+$hint
 
-install_windsurf() {
-  mkdir -p "$HOME/.codeium/windsurf"
-  core_json url > "$HOME/.codeium/windsurf/mcp_config.json"
-  echo "  OK $HOME/.codeium/windsurf/mcp_config.json"
-}
-
-install_vscode() {
-  mkdir -p "$PROJECT_ROOT/.vscode"
-  core_json url > "$PROJECT_ROOT/.vscode/mcp.json"
-  echo "  OK $PROJECT_ROOT/.vscode/mcp.json"
-}
-
-install_gemini() {
-  mkdir -p "$HOME/.gemini"
-  core_json httpUrl > "$HOME/.gemini/settings.json"
-  echo "  OK $HOME/.gemini/settings.json"
+只读规则仍以项目根目录 \`AGENTS.md\` 为准。
+EOF
+  echo "  OK $dir/mcp.json"
 }
 
 run_ide() {
   case "$1" in
-    cursor) install_cursor ;;
-    codex) install_codex ;;
-    antigravity) install_antigravity ;;
-    claude) install_claude ;;
-    claude-desktop) install_claude_desktop ;;
-    windsurf) install_windsurf ;;
-    vscode) install_vscode ;;
-    gemini) install_gemini ;;
-    *) echo "未知 IDE: $1"; exit 1 ;;
+    cursor)
+      mkdir -p "$PROJECT_ROOT/.cursor"
+      core_json url > "$PROJECT_ROOT/.cursor/mcp.json"
+      echo "  OK $PROJECT_ROOT/.cursor/mcp.json"
+      ;;
+    codex)
+      mkdir -p "$PROJECT_ROOT/.codex" "$HOME/.codex"
+      core_toml > "$PROJECT_ROOT/.codex/config.toml"
+      if [[ ! -f "$HOME/.codex/config.toml" ]]; then
+        cp "$PROJECT_ROOT/.codex/config.toml" "$HOME/.codex/config.toml"
+      elif ! grep -q '\[mcp_servers.google-ads\]' "$HOME/.codex/config.toml"; then
+        cat "$PROJECT_ROOT/.codex/config.toml" >> "$HOME/.codex/config.toml"
+      fi
+      [[ -f "$HOME/.codex/AGENTS.md" ]] || cp "$PROJECT_ROOT/AGENTS.md" "$HOME/.codex/AGENTS.md"
+      echo "  OK Codex config"
+      ;;
+    antigravity)
+      mkdir -p "$HOME/.gemini/antigravity"
+      core_json serverUrl > "$HOME/.gemini/antigravity/mcp_config.json"
+      echo "  OK $HOME/.gemini/antigravity/mcp_config.json"
+      ;;
+    claude)
+      mkdir -p "$HOME/.claude"
+      core_json url > "$HOME/.claude/settings.json"
+      echo "  OK $HOME/.claude/settings.json"
+      ;;
+    claude-desktop)
+      if [[ "$(uname)" == "Darwin" ]]; then
+        dest="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+      else
+        dest="${XDG_CONFIG_HOME:-$HOME/.config}/Claude/claude_desktop_config.json"
+      fi
+      mkdir -p "$(dirname "$dest")"
+      core_json url > "$dest"
+      echo "  OK $dest"
+      ;;
+    windsurf)
+      mkdir -p "$HOME/.codeium/windsurf"
+      core_json url > "$HOME/.codeium/windsurf/mcp_config.json"
+      echo "  OK $HOME/.codeium/windsurf/mcp_config.json"
+      ;;
+    vscode)
+      mkdir -p "$PROJECT_ROOT/.vscode"
+      core_json url > "$PROJECT_ROOT/.vscode/mcp.json"
+      echo "  OK $PROJECT_ROOT/.vscode/mcp.json"
+      ;;
+    gemini)
+      mkdir -p "$HOME/.gemini"
+      core_json httpUrl > "$HOME/.gemini/settings.json"
+      echo "  OK $HOME/.gemini/settings.json"
+      ;;
+    trae)
+      install_manual_json_ide "Trae" "trae" "Trae 官方 MCP 设置支持手动添加 MCP Server；Trae CN 通常在 AI 面板设置中的 MCP 页面导入。"
+      ;;
+    qoder|lingma)
+      install_manual_json_ide "Qoder CN / 通义灵码" "qoder-cn" "Qoder CN / 通义灵码请在个人设置或智能体模式中的 MCP 服务页面添加。"
+      ;;
+    marscode)
+      install_manual_json_ide "MarsCode" "marscode" "若当前 MarsCode 版本提供 MCP / 工具配置入口，请粘贴此 JSON；若没有 MCP 入口，请使用 VS Code / Trae / Qoder / Codex。"
+      ;;
+    *)
+      echo "未知 IDE: $1" >&2
+      exit 1
+      ;;
   esac
 }
 
@@ -237,13 +233,19 @@ echo "项目: $PROJECT_ROOT"
 ensure_configs
 
 if [[ "$IDE" == "all" ]]; then
-  for i in cursor codex antigravity claude claude-desktop windsurf vscode gemini; do
+  for i in cursor codex antigravity claude claude-desktop windsurf vscode gemini trae qoder marscode; do
     echo ">>> $i"
     run_ide "$i"
   done
 else
-  run_ide "$IDE"
+  IFS=',' read -ra ides <<< "$IDE"
+  for i in "${ides[@]}"; do
+    i="$(echo "$i" | xargs)"
+    [[ -z "$i" ]] && continue
+    echo ">>> $i"
+    run_ide "$i"
+  done
 fi
 
 echo ""
-echo "完成。详见 docs/SETUP.md"
+echo "完成。请重启 IDE，并完成所选平台的 OAuth / API Token 配置。详见 docs/SETUP.md。"

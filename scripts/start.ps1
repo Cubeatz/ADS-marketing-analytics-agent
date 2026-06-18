@@ -17,8 +17,8 @@
   非交互模式：直接传入问卷答案，如 "1AB 2A 3A 7A 8A 9A"。
 #>
 param(
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
-    [ValidateSet("cursor", "codex", "antigravity", "claude", "claude-desktop", "windsurf", "vscode", "gemini", "all")]
+    [string]$ProjectRoot = "",
+    [ValidateSet("cursor", "codex", "antigravity", "claude", "claude-desktop", "windsurf", "vscode", "gemini", "trae", "qoder", "lingma", "marscode", "all")]
     [string]$Ide = "cursor",
     [string]$Answers = "",
     [switch]$SkipInstall,
@@ -26,6 +26,14 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) { $ProjectRoot = Split-Path -Parent $PSScriptRoot }
+
+try {
+    [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
+    [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    $OutputEncoding = [Console]::OutputEncoding
+    $env:PYTHONIOENCODING = "utf-8"
+} catch { }
 
 function Test-OnboardingComplete {
     param([string]$Root)
@@ -99,8 +107,8 @@ function Show-NextSteps {
     Write-Host ""
     Write-Host "========== 接下来您可以 ==========" -ForegroundColor Green
     Write-Host "1. 确认账户 ID：$dataRoot\config\accounts.json"
-    Write-Host "2. 重启 Cursor，在 MCP 面板完成各平台 OAuth（只读授权即可）"
-    Write-Host "3. Google Ads 还需设置环境变量，见 docs\SETUP.md"
+    Write-Host "2. 重启 IDE，在 MCP 面板完成已选平台 OAuth / API Token 配置"
+    Write-Host "3. 只有选择 Google Ads 时，才需要设置 Google Ads 环境变量；见 docs\SETUP.md"
     Write-Host "4. 在对话中说：「生成昨日营销日报」"
     Write-Host ""
 }

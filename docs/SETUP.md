@@ -1,89 +1,46 @@
 # 远端部署指南（全 IDE）
 
-面向 **非技术人员**。无需安装数据库，只需：Node.js、Python pipx、本项目文件夹、三个平台的 OAuth 授权。
+这份指南面向非技术广告投放人员。你不需要安装数据库，只需要这个项目文件夹，以及首次配置中已选择平台所需的 OAuth / API Token。
 
-## 第一步：首次配置（必做）
+## 第一步：首次配置
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\onboard.ps1
 ```
 
-向导将询问：平台选择、账户 ID、报告时间、文件目录、飞书或本地 Word、其他偏好。  
-详见 [ONBOARDING.md](ONBOARDING.md)
+向导会询问：平台选择、账户 ID、报告时间、文件目录、飞书或本地 Word、其他偏好。详见 `docs/ONBOARDING.md`。
 
-## 第二步：准备环境
+## 第二步：准备基础环境
 
-### Windows
+Windows：
 
 ```powershell
-# 1. 安装 Node.js（https://nodejs.org LTS）
 node --version
-
-# 2. 安装 Python 3.10+ 和 pipx
+python --version
 pip install pipx
 pipx ensurepath
-
-# 3. 克隆或复制本项目到远端电脑，例如：
-# C:\Users\你的用户名\Projects\marketing-analytics-agent
 ```
 
-### macOS
+macOS：
 
 ```bash
 brew install node python pipx
 pipx ensurepath
 ```
 
-## 第二步：填写配置（无需数据库）
+## 第三步：按已选平台准备凭证
 
-在项目根目录执行：
+只配置你在首次问卷第 1 题选择的平台；未选择的平台可以跳过。
 
-**Windows:**
-```powershell
-cd C:\path\to\marketing-analytics-agent
-copy config\accounts.example.json config\accounts.json
-copy config\thresholds.example.json config\thresholds.json
-copy config\feishu.example.json config\feishu.json
-notepad config\accounts.json
-```
+### Google Ads（仅选择 Google Ads 时）
 
-**macOS/Linux:**
-```bash
-cp config/accounts.example.json config/accounts.json
-cp config/thresholds.example.json config/thresholds.json
-cp config/feishu.example.json config/feishu.json
-```
-
-填写 `accounts.json` 里各 App 的 Google / Meta / AppsFlyer 账户 ID。
-
-## 第三步：配置 Google Ads 凭证
+安装 Google Cloud CLI 后执行一次：
 
 ```powershell
-# 安装 Google Cloud CLI 后执行（一次性）
 gcloud auth application-default login --scopes https://www.googleapis.com/auth/adwords,https://www.googleapis.com/auth/cloud-platform
 ```
 
-记下输出的 credentials 文件路径，填入环境变量或安装脚本提示的位置。
-
-还需在 [Google Ads API Center](https://ads.google.com/aw/apicenter) 申请 **Developer Token**。
-
-## 第四步：安装 MCP 到你的 IDE
-
-### 一键安装（推荐）
-
-**Windows:**
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Ide all
-```
-
-**macOS/Linux:**
-```bash
-bash scripts/install.sh all
-```
-
-支持的 `-Ide` 值：`cursor` | `codex` | `antigravity` | `claude` | `windsurf` | `vscode` | `gemini` | `all`
-
-安装前设置环境变量（或在安装脚本交互中填写）：
+还需要在 Google Ads API Center 申请 Developer Token。安装前设置：
 
 ```powershell
 $env:GOOGLE_APPLICATION_CREDENTIALS = "C:\Users\你\.config\gcloud\application_default_credentials.json"
@@ -91,93 +48,97 @@ $env:GOOGLE_PROJECT_ID = "你的GCP项目ID"
 $env:GOOGLE_ADS_DEVELOPER_TOKEN = "你的开发者令牌"
 ```
 
-### 各 IDE 手动安装
+### Meta Ads（仅选择 Meta 时）
 
-详见 [IDE-MATRIX.md](IDE-MATRIX.md)。核心模板在 `integrations/` 目录。
+在对应 IDE 的 MCP/OAuth 页面连接：
 
-#### Cursor
-1. 复制 `integrations/cursor/mcp.json.template` → 项目 `.cursor/mcp.json`
-2. 替换环境变量占位符
-3. 重启 Cursor → MCP 面板完成 OAuth
+```text
+https://mcp.facebook.com/ads
+```
 
-#### Codex
-1. 运行 `scripts/install.ps1 -Ide codex`
-2. 或合并 `integrations/codex/config.toml.template` 到 `~/.codex/config.toml`
-3. 项目根已有 `AGENTS.md`，Codex 会自动读取
-4. 重启 Codex，运行 `/mcp` 检查连接
+授权时选择只读权限。
 
-#### Antigravity
-1. Agent 面板 → `...` → Manage MCP Servers → View raw config
-2. 合并 `integrations/antigravity/mcp_config.json.template` 内容
-3. **注意**：HTTP 服务用 `serverUrl`，不是 `url`
-4. 重启 Antigravity，完成 Meta / AppsFlyer OAuth
+### Adjust（仅选择 Adjust 时）
 
-#### Claude Desktop
-1. 编辑 `%APPDATA%\Claude\claude_desktop_config.json`（Windows）
-2. 合并 `integrations/claude-desktop/claude_desktop_config.json.template`
-3. 重启 Claude Desktop
+```powershell
+$env:ADJUST_API_TOKEN = "你的 Adjust API Token"
+```
 
-#### Windsurf
-1. 编辑 `~/.codeium/windsurf/mcp_config.json`
-2. 合并 `integrations/windsurf/mcp_config.json.template`
+### AppsFlyer（仅选择 AppsFlyer 时）
 
-#### VS Code (Copilot MCP)
-1. 复制 `integrations/vscode/mcp.json.template` → 项目 `.vscode/mcp.json`
+在对应 IDE 的 MCP/OAuth 页面连接：
 
-#### Gemini CLI
-1. 合并 `integrations/gemini-cli/settings.json.template` 到 `~/.gemini/settings.json`
+```text
+https://mcp.appsflyer.com/auth/mcp
+```
 
-#### ChatGPT
-见 [integrations/chatgpt.md](../integrations/chatgpt.md)
+### LinkedIn / Microsoft Advertising / Reddit（仅选择对应平台时）
+
+这些平台使用自托管 npm MCP。请先确认 Node.js 可用，并按平台 API 要求准备 OAuth / Token。
+
+### TikTok Ads（仅选择 TikTok Ads 时）
+
+使用 TikTok 官方 TikTok Ads MCP Server / Agentic Hub 授权入口。若你的 IDE 需要 URL 方式配置：
+
+```powershell
+$env:TIKTOK_ADS_MCP_URL = "官方提供的 MCP URL"
+```
+
+### Amazon Ads（仅选择 Amazon Ads 时）
+
+Amazon Ads MCP Server 已进入官方 open beta。使用前需要 Amazon Ads API 凭证，以及官方、伙伴或自托管 MCP 端点：
+
+```powershell
+$env:AMAZON_ADS_MCP_URL = "官方或伙伴提供的 MCP URL"
+```
+
+## 第四步：安装 MCP 到你的 IDE
+
+Windows：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Ide all
+```
+
+macOS/Linux：
+
+```bash
+bash scripts/install.sh all
+```
+
+支持的 `-Ide` 值：
+
+```text
+cursor | codex | antigravity | trae | qoder | lingma | marscode | claude | claude-desktop | windsurf | vscode | gemini | all
+```
+
+安装脚本会根据 `config/workspace.json` 只生成已选平台的 MCP 配置。
 
 ## 第五步：验证连接
 
-在任意已配置的 IDE 中说：
+在已配置的 IDE 中说：
 
-> 列出我可访问的 Google Ads 账户
-
-> 查看 Meta 广告账户列表
-
-> 查询 AppsFlyer 昨日安装数据
-
-三个都能返回数据即配置成功。
-
-## 飞书与 DOCX 投递
-
-**未配置飞书时不会报错**，自动在指定目录生成 Word 文档。
-
-编辑 `config/feishu.json`（从 `feishu.example.json` 复制）：
-
-```json
-{
-  "enabled": false,
-  "webhook_url": "",
-  "docx_fallback": {
-    "enabled": true,
-    "custom_output_dir": "C:/Users/运营/Desktop/营销日报",
-    "filename": "daily-report.docx"
-  }
-}
+```text
+列出我已连接的平台账户
 ```
 
-投递命令：
+也可以只测试你实际选择的平台，例如：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\deliver-report.ps1
+```text
+查看 Meta 广告账户列表
+查询 AppsFlyer 昨日安装数据
+查询 Adjust 昨日归因数据
 ```
 
-需安装 DOCX 依赖（一次性）：`pip install -r requirements.txt`
+未选择的平台不需要测试。
 
 ## 第六步：生成日报
 
 对 Agent 说：
 
-> 生成昨日营销日报
-
-Agent 会自动运行投递脚本：
-
-- 飞书已配置 → 推送飞书
-- 未配置 → 生成 DOCX 到 `docx_fallback` 指定目录
+```text
+生成昨日营销日报
+```
 
 手动投递：
 
@@ -185,25 +146,18 @@ Agent 会自动运行投递脚本：
 powershell -ExecutionPolicy Bypass -File scripts\deliver-report.ps1 -Date 2026-06-17
 ```
 
-## 飞书机器人配置
-
-1. 飞书群 → 设置 → 群机器人 → 添加自定义机器人
-2. 复制 Webhook 地址到 `config/feishu.json` 的 `webhook_url`
-3. 设置 `enabled: true`
+未配置飞书时，会自动在指定目录生成 Word 文档。
 
 ## 常见问题
 
-**Q: 必须装数据库吗？**  
-A: 不需要。全部用 JSON 配置 + `reports/` 文件夹。
+**必须装数据库吗？**
+不需要。全部使用 JSON 配置、`temp/` 临时数据和 `reports/` 报告文件夹。
 
-**Q: Codex 和 Cursor 能同时用吗？**  
-A: 可以。共用项目文件夹，MCP 配置分别在各自用户目录。
+**为什么 README 里提到 Google，但我没投 Google？**
+Google 只是一个可选平台。只有你在第 1 题选择 Google Ads 时，才需要配置 Google 相关环境变量。
 
-**Q: Antigravity 连不上 Meta？**  
-A: 确认用 `serverUrl` 字段；OAuth 选只读权限。
+**暂不支持的平台怎么办？**
+见 `docs/AD-PLATFORMS.md` 的“暂不支持”表。那里会说明是没有官方公开 MCP、只有第三方方案，还是处于封闭测试。
 
-**Q: Google 报 developer token 仅测试账户？**  
-A: 需在 API Center 申请 Explorer 或更高权限。
-
-**Q: 没配飞书怎么办？**  
-A: 不用配。在 `feishu.json` 里设 `docx_fallback.custom_output_dir` 为桌面等路径，报告会自动生成 Word 文件。
+**没配飞书怎么办？**
+不用配置。系统会自动生成本地 DOCX。

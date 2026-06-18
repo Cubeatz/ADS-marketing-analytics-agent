@@ -1,13 +1,20 @@
 ﻿param(
     [Parameter(Mandatory = $false)]
-    [ValidateSet("cursor", "codex", "antigravity", "claude", "claude-desktop", "windsurf", "vscode", "gemini", "all")]
     [string]$Ide = "all",
 
     [Parameter(Mandatory = $false)]
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot)
+    [string]$ProjectRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) { $ProjectRoot = Split-Path -Parent $PSScriptRoot }
+
+try {
+    [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
+    [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    $OutputEncoding = [Console]::OutputEncoding
+    $env:PYTHONIOENCODING = "utf-8"
+} catch { }
 
 function Expand-EnvPlaceholders {
     param([string]$Text)
@@ -57,6 +64,8 @@ function Get-EnabledMcpServerNames {
         linkedin_ads = "linkedin-ads"
         bing_ads     = "bing-ads"
         reddit_ads   = "reddit-ads"
+        tiktok_ads   = "tiktok-ads"
+        amazon_ads   = "amazon-ads"
     }
 
     $wsPath = Join-Path $Root "config\workspace.json"
@@ -64,6 +73,9 @@ function Get-EnabledMcpServerNames {
     if (Test-Path $wsPath) {
         try {
             $ws = Get-Content $wsPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($ws.onboarding -and -not $ws.onboarding.completed) {
+                return @("google-ads", "meta-ads", "adjust", "appsflyer", "linkedin-ads", "bing-ads", "reddit-ads", "tiktok-ads", "amazon-ads")
+            }
             if ($ws.platforms) {
                 $ws.platforms.PSObject.Properties | ForEach-Object {
                     if ($_.Value.enabled -and $map.ContainsKey($_.Name)) {
@@ -75,7 +87,7 @@ function Get-EnabledMcpServerNames {
     }
 
     if ($selected.Count -gt 0) { return $selected }
-    return @("google-ads", "meta-ads", "adjust", "appsflyer", "linkedin-ads", "bing-ads", "reddit-ads")
+    return @("google-ads", "meta-ads", "adjust", "appsflyer", "linkedin-ads", "bing-ads", "reddit-ads", "tiktok-ads", "amazon-ads")
 }
 
 function Convert-CoreServerToJsonShape {
@@ -302,6 +314,66 @@ function Install-Gemini {
     Write-Host "Gemini CLI: 重启 gemini"
 }
 
+function Test-WorkspacePlatformEnabled {
+    param([string]$Root, [string]$Platform)
+    $wsPath = Join-Path $Root "config\workspace.json"
+    if (-not (Test-Path $wsPath)) { return $false }
+    try {
+        $ws = Get-Content $wsPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        $node = $ws.platforms.$Platform
+        return [bool]($node -and $node.enabled)
+    } catch {
+        return $false
+    }
+}
+
+function Install-ManualJsonIde {
+    param(
+        [string]$Name,
+        [string]$Folder,
+        [string]$Hint
+    )
+    $dir = Join-Path $ProjectRoot "integrations\$Folder"
+    $dest = Join-Path $dir "mcp.json"
+    Write-CoreJsonMcpServers -TargetPath $dest -Root $ProjectRoot -HttpUrlField "url"
+    $readme = @"
+# $Name MCP 配置
+
+此客户端未使用项目内可安全自动写入的固定配置路径。本脚本已生成可复制的 MCP JSON：
+
+```
+$dest
+```
+
+使用方式：
+
+1. 打开 $Name 的 MCP / 工具 / 服务配置页面。
+2. 选择手动添加或 JSON 配置。
+3. 粘贴 `mcp.json` 中的 `mcpServers` 配置。
+4. 保存后重启 IDE，并完成所选平台的 OAuth / API Token 配置。
+
+$Hint
+
+只读规则仍以项目根目录 `AGENTS.md` 为准。
+"@
+    $readme | Set-Content (Join-Path $dir "README.md") -Encoding UTF8
+}
+
+function Install-Trae {
+    Install-ManualJsonIde -Name "Trae" -Folder "trae" -Hint "Trae 官方 MCP 设置支持手动添加 MCP Server；如使用 Trae CN，通常在 AI 面板设置中的 MCP 页面导入。"
+    Write-Host "Trae: 已生成 integrations\trae\mcp.json，请在 Trae 的 MCP 设置中手动导入"
+}
+
+function Install-Qoder {
+    Install-ManualJsonIde -Name "Qoder CN / 通义灵码" -Folder "qoder-cn" -Hint "Qoder CN / 通义灵码请在个人设置或智能体模式中的 MCP 服务页面添加。"
+    Write-Host "Qoder CN / 通义灵码: 已生成 integrations\qoder-cn\mcp.json，请在 MCP 服务页面手动导入"
+}
+
+function Install-MarsCode {
+    Install-ManualJsonIde -Name "MarsCode" -Folder "marscode" -Hint "MarsCode 各版本 MCP 入口差异较大；若当前版本提供 MCP/工具配置入口，请粘贴此 JSON。若没有 MCP 入口，请使用 VS Code / Trae / Qoder / Codex。"
+    Write-Host "MarsCode: 已生成 integrations\marscode\mcp.json；若当前版本有 MCP 入口，可手动导入"
+}
+
 function Ensure-ConfigFiles {
     $pairs = @(
         @("accounts.example.json", "accounts.json"),
@@ -363,9 +435,16 @@ Write-Host ""
 Ensure-ConfigFiles
 
 $ides = if ($Ide -eq "all") {
-    @("cursor", "codex", "antigravity", "claude", "claude-desktop", "windsurf", "vscode", "gemini")
+    @("cursor", "codex", "antigravity", "claude", "claude-desktop", "windsurf", "vscode", "gemini", "trae", "qoder", "marscode")
 } else {
     $Ide -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+}
+
+$validIdes = @("cursor", "codex", "antigravity", "claude", "claude-desktop", "windsurf", "vscode", "gemini", "trae", "qoder", "lingma", "marscode")
+foreach ($i in $ides) {
+    if ($validIdes -notcontains $i) {
+        Write-Error "未知 IDE: $i。可选值: $($validIdes -join ', ')"
+    }
 }
 
 foreach ($i in $ides) {
@@ -379,12 +458,31 @@ foreach ($i in $ides) {
         "windsurf"       { Install-Windsurf }
         "vscode"         { Install-Vscode }
         "gemini"         { Install-Gemini }
+        "trae"           { Install-Trae }
+        "qoder"          { Install-Qoder }
+        "lingma"         { Install-Qoder }
+        "marscode"       { Install-MarsCode }
     }
     Write-Host ""
 }
 
-Write-Host "Done. Set these environment variables, then restart the IDE:"
-Write-Host "  GOOGLE_APPLICATION_CREDENTIALS"
-Write-Host "  GOOGLE_PROJECT_ID"
-Write-Host "  GOOGLE_ADS_DEVELOPER_TOKEN"
+Write-Host "Done. Restart the IDE, then complete OAuth / API Token setup for selected platforms."
+if (Test-WorkspacePlatformEnabled -Root $ProjectRoot -Platform "google_ads") {
+    Write-Host "Google Ads selected. Set:"
+    Write-Host "  GOOGLE_APPLICATION_CREDENTIALS"
+    Write-Host "  GOOGLE_PROJECT_ID"
+    Write-Host "  GOOGLE_ADS_DEVELOPER_TOKEN"
+}
+if (Test-WorkspacePlatformEnabled -Root $ProjectRoot -Platform "adjust") {
+    Write-Host "Adjust selected. Set:"
+    Write-Host "  ADJUST_API_TOKEN"
+}
+if (Test-WorkspacePlatformEnabled -Root $ProjectRoot -Platform "tiktok_ads") {
+    Write-Host "TikTok Ads selected. Set the official MCP endpoint if your IDE uses URL config:"
+    Write-Host "  TIKTOK_ADS_MCP_URL"
+}
+if (Test-WorkspacePlatformEnabled -Root $ProjectRoot -Platform "amazon_ads") {
+    Write-Host "Amazon Ads selected. Set the official/partner/self-hosted MCP endpoint:"
+    Write-Host "  AMAZON_ADS_MCP_URL"
+}
 Write-Host "See docs/SETUP.md and docs/ONBOARDING.md"

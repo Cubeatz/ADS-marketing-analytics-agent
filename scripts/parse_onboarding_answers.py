@@ -19,6 +19,11 @@ from workspace_lib import (  # noqa: E402
     initialize_workspace_root,
 )
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 
 def load_json(project_root: Path, name: str) -> dict[str, Any]:
     with (project_root / "config" / name).open(encoding="utf-8") as f:
@@ -408,6 +413,20 @@ def build_workspace(
     plats = example["platforms"]
     for key in plats:
         plats[key]["enabled"] = key in platforms_enabled
+    if "google_ads" in plats:
+        plats["google_ads"]["customer_id"] = extras.get("google_customer_id") or plats["google_ads"].get("customer_id", "")
+    if "meta_ads" in plats:
+        plats["meta_ads"]["ad_account_id"] = extras.get("meta_ad_account_id") or plats["meta_ads"].get("ad_account_id", "")
+    if "linkedin_ads" in plats:
+        plats["linkedin_ads"]["ad_account_id"] = extras.get("linkedin_ad_account_id") or plats["linkedin_ads"].get("ad_account_id", "")
+    if "bing_ads" in plats:
+        plats["bing_ads"]["account_id"] = extras.get("bing_account_id") or plats["bing_ads"].get("account_id", "")
+    if "reddit_ads" in plats:
+        plats["reddit_ads"]["account_id"] = extras.get("reddit_account_id") or plats["reddit_ads"].get("account_id", "")
+    if "tiktok_ads" in plats:
+        plats["tiktok_ads"]["advertiser_id"] = extras.get("tiktok_advertiser_id") or plats["tiktok_ads"].get("advertiser_id", "")
+    if "amazon_ads" in plats:
+        plats["amazon_ads"]["profile_id"] = extras.get("amazon_ads_profile_id") or plats["amazon_ads"].get("profile_id", "")
 
     delivery = resolved.get("delivery_mode") or "local_docx"
     usage_mode = resolved.get("usage_mode") or "one_time"

@@ -1,6 +1,6 @@
 {
   "$schema": "marketing-analytics-agent/mcp-core/v1",
-  "description": "多平台只读 MCP 定义。与 config/ad-platforms.json 中 supported=true 项对应。",
+  "description": "多平台只读 MCP 定义，与 config/ad-platforms.json 中 supported=true 的项目对应。",
   "servers": {
     "google-ads": {
       "transport": "stdio",
@@ -70,6 +70,22 @@
       "args": ["-y", "mcp-reddit-ads"],
       "optional": true,
       "note": "自托管 mharnett/mcp-reddit-ads"
+    },
+    "tiktok-ads": {
+      "transport": "http",
+      "url": "${TIKTOK_ADS_MCP_URL}",
+      "readonly": true,
+      "oauth": "tiktok_business",
+      "optional": true,
+      "note": "TikTok Ads 官方 MCP/Agentic Hub；需使用官方提供的 MCP URL 或 OAuth 入口"
+    },
+    "amazon-ads": {
+      "transport": "http",
+      "url": "${AMAZON_ADS_MCP_URL}",
+      "readonly": true,
+      "oauth": "amazon_ads",
+      "optional": true,
+      "note": "Amazon Ads 官方 MCP open beta；需 Amazon Ads API 凭证和官方/伙伴/自托管 MCP 端点"
     }
   }
 }

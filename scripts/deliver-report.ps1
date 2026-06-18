@@ -3,13 +3,21 @@
     [string]$Date = (Get-Date).AddDays(-1).ToString("yyyy-MM-dd"),
 
     [Parameter(Mandatory = $false)]
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
+    [string]$ProjectRoot = "",
 
     [Parameter(Mandatory = $false)]
     [switch]$ForceDocx
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) { $ProjectRoot = Split-Path -Parent $PSScriptRoot }
+
+try {
+    [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
+    [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    $OutputEncoding = [Console]::OutputEncoding
+    $env:PYTHONIOENCODING = "utf-8"
+} catch { }
 
 function Get-WorkspaceConfig {
     param([string]$Root)

@@ -3,7 +3,7 @@
     "completed": false,
     "completed_at": null,
     "operator_name": "",
-    "notes": "首次使用前运行 scripts/onboard.ps1 或由 Agent 引导完成配置"
+    "notes": "首次使用前运行 scripts/onboard.ps1，或由 Agent 引导完成配置"
   },
   "platforms": {
     "google_ads": {
@@ -14,7 +14,7 @@
         "Google Cloud 项目 + 启用 Google Ads API",
         "gcloud auth application-default login（OAuth）",
         "Google Ads Developer Token（API Center 申请）",
-        "环境变量：GOOGLE_APPLICATION_CREDENTIALS、GOOGLE_PROJECT_ID、GOOGLE_ADS_DEVELOPER_TOKEN"
+        "仅选择 Google Ads 时才需要设置 GOOGLE_APPLICATION_CREDENTIALS、GOOGLE_PROJECT_ID、GOOGLE_ADS_DEVELOPER_TOKEN"
       ]
     },
     "meta_ads": {
@@ -23,7 +23,7 @@
       "required_setup": [
         "Meta Business Manager 管理员权限",
         "MCP 连接 https://mcp.facebook.com/ads 并完成 OAuth",
-        "建议 OAuth 授权时选择【只读】权限"
+        "建议 OAuth 授权时选择只读权限"
       ]
     },
     "adjust": {
@@ -65,6 +65,24 @@
         "Reddit Ads API 权限",
         "npm 包 mcp-reddit-ads 自托管"
       ]
+    },
+    "tiktok_ads": {
+      "enabled": false,
+      "advertiser_id": "",
+      "required_setup": [
+        "TikTok for Business / TikTok Ads 账户权限",
+        "使用官方 TikTok Ads MCP Server 或 Agentic Hub 授权入口",
+        "若 IDE 需要 URL 方式配置，请设置 TIKTOK_ADS_MCP_URL"
+      ]
+    },
+    "amazon_ads": {
+      "enabled": false,
+      "profile_id": "",
+      "required_setup": [
+        "Amazon Ads 账户和 Amazon Ads API 凭证",
+        "使用官方 Amazon Ads MCP Server open beta",
+        "若 IDE 需要 URL 方式配置，请设置 AMAZON_ADS_MCP_URL"
+      ]
     }
   },
   "schedule": {
@@ -78,7 +96,7 @@
   },
   "directories": {
     "workspace_root": "",
-    "_workspace_root_comment": "空则与项目根目录相同；引导默认 ~/Desktop/marketing-analytics-agent",
+    "_workspace_root_comment": "留空则与项目根目录相同；引导默认 ~/Desktop/marketing-analytics-agent",
     "reports_md": "reports",
     "documents": "output/documents",
     "temp": {
@@ -86,7 +104,7 @@
       "categories": {
         "raw": {
           "path": "temp/raw/{date}/{platform}/{category}",
-          "description": "MCP 原始响应 JSON，按平台+数据类别分子目录"
+          "description": "MCP 原始响应 JSON，按平台和数据类别分子目录"
         },
         "processed": {
           "path": "temp/processed/{date}/{platform}/{category}",
@@ -105,7 +123,7 @@
           "description": "可选 CSV/表格导出"
         }
       },
-      "platforms": ["google_ads", "meta_ads", "adjust", "appsflyer", "linkedin_ads", "bing_ads", "reddit_ads"],
+      "platforms": ["google_ads", "meta_ads", "adjust", "appsflyer", "linkedin_ads", "bing_ads", "reddit_ads", "tiktok_ads", "amazon_ads"],
       "categories_by_platform": {
         "google_ads": ["account", "campaigns", "ad_groups", "keywords", "metrics"],
         "meta_ads": ["account", "campaigns", "adsets", "ads", "creatives", "insights"],
@@ -113,7 +131,9 @@
         "appsflyer": ["attribution", "skan", "cohorts", "events"],
         "linkedin_ads": ["account", "campaigns", "creatives", "analytics"],
         "bing_ads": ["account", "campaigns", "keywords", "metrics"],
-        "reddit_ads": ["account", "campaigns", "ads", "metrics"]
+        "reddit_ads": ["account", "campaigns", "ads", "metrics"],
+        "tiktok_ads": ["account", "campaigns", "ad_groups", "ads", "creatives", "metrics"],
+        "amazon_ads": ["profiles", "campaigns", "ad_groups", "keywords", "targets", "reports"]
       },
       "shared_categories": {
         "processed": ["blended", "comparison"]
