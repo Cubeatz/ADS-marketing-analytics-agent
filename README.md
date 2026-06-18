@@ -39,7 +39,7 @@ powershell -ExecutionPolicy Bypass -File scripts\onboard.ps1
 # 1. 运行首次配置，选择实际需要的平台
 powershell -ExecutionPolicy Bypass -File scripts\start.ps1
 
-# 2. 按已选平台补全 OAuth / API Token，见 docs/SETUP.md
+# 2. 按已选平台补全 OAuth / API Token，见 docs/SETUP.md 和 docs/PLATFORM-CREDENTIALS.md
 #    只有选择 Google Ads 时，才需要 Google Ads 环境变量。
 
 # 3. 安装到你实际使用的 IDE
@@ -102,6 +102,7 @@ marketing-analytics-agent/
 | 文档 | 内容 |
 |------|------|
 | `docs/AD-PLATFORMS.md` | 平台支持清单和暂不支持原因 |
+| `docs/PLATFORM-CREDENTIALS.md` | 各平台凭证从哪里来、填到哪里、怎么验证 |
 | `docs/SETUP.md` | 远端部署和平台凭证配置 |
 | `docs/ONBOARDING.md` | 首次问卷说明 |
 | `docs/TEMP-LAYOUT.md` | temp 分层目录规范 |
