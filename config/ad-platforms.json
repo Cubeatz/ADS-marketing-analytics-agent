@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "description": "当前问卷第 1 题可选择的平台目录。这里只放已支持平台，未支持平台记录在 docs/AD-PLATFORMS.md。",
+  "platforms": [
+    {
+      "letter": "A",
+      "id": "google_ads",
+      "name": "Google Ads",
+      "category": "广告投放",
+      "supported": true,
+      "mcp": "googleads/google-ads-mcp（官方，只读）"
+    },
+    {
+      "letter": "B",
+      "id": "meta_ads",
+      "name": "Meta（Facebook / Instagram）",
+      "category": "广告投放",
+      "supported": true,
+      "mcp": "https://mcp.facebook.com/ads（官方）"
+    },
+    {
+      "letter": "C",
+      "id": "adjust",
+      "name": "Adjust",
+      "category": "归因 / MMP",
+      "supported": true,
+      "mcp": "bitscorp-mcp/mcp-adjust（本地 API Token）"
+    },
+    {
+      "letter": "D",
+      "id": "appsflyer",
+      "name": "AppsFlyer",
+      "category": "归因 / MMP",
+      "supported": true,
+      "mcp": "https://mcp.appsflyer.com/auth/mcp（官方）"
+    },
+    {
+      "letter": "E",
+      "id": "linkedin_ads",
+      "name": "LinkedIn Ads",
+      "category": "广告投放",
+      "supported": true,
+      "mcp": "manlikemuneeb/ads-mcp（自托管）"
+    },
+    {
+      "letter": "F",
+      "id": "bing_ads",
+      "name": "Microsoft Advertising（Bing Ads）",
+      "category": "广告投放",
+      "supported": true,
+      "mcp": "mcp-bing-ads（npm 自托管）"
+    },
+    {
+      "letter": "G",
+      "id": "reddit_ads",
+      "name": "Reddit Ads",
+      "category": "广告投放",
+      "supported": true,
+      "mcp": "mcp-reddit-ads（npm 自托管）"
+    }
+  ]
+}

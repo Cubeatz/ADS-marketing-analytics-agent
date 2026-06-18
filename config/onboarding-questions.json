@@ -1,0 +1,173 @@
+{
+  "version": "1.2",
+  "instruction": "推荐逐题回答；每题默认项均为 A（标有「推荐」），跳过/Z 等同选 A。第 2 题选 A「一次性」后自动跳过 4–6 题。示例：1AB 2A 3A 7A 8A 9A",
+  "navigation": {
+    "back": ["上一步", "返回", "back", "上题"],
+    "skip": ["跳过", "skip", "z", "Z"],
+    "workspace_reuse": ["继续", "沿用", "是", "1", "y"],
+    "workspace_change": ["换目录", "否", "2", "n", "重选"]
+  },
+  "usage_modes": {
+    "one_time": {
+      "label": "一次性使用",
+      "description": "需要时再让 Agent 生成报告，不配置每日定时",
+      "skip_question_ids": [4, 5, 6],
+      "defaults": {
+        "report_time": null,
+        "weekdays_only": false,
+        "auto_run": false,
+        "data_period": "on_demand"
+      }
+    },
+    "scheduled": {
+      "label": "定时使用",
+      "description": "每天固定时间自动生成前一自然日报告",
+      "skip_question_ids": [],
+      "defaults": {
+        "report_time": "09:00",
+        "weekdays_only": false,
+        "auto_run": true,
+        "data_period": "yesterday"
+      }
+    }
+  },
+  "questions": [
+    {
+      "id": 1,
+      "key": "platforms",
+      "type": "multi",
+      "skippable": false,
+      "prompt": "您告诉我需要使用的平台（可多选；仅展示当前已支持平台）",
+      "options_from": "ad-platforms.json"
+    },
+    {
+      "id": 2,
+      "key": "usage_mode",
+      "type": "single",
+      "skippable": false,
+      "default_letter": "A",
+      "prompt": "使用方式（单选）— 将影响后面是否询问报告时间与自动运行",
+      "options": {
+        "A": { "label": "一次性使用（需要时再让 Agent 生成报告）（推荐）", "value": "one_time", "recommended": true },
+        "B": { "label": "定时使用（每天自动生成营销日报）", "value": "scheduled" }
+      }
+    },
+    {
+      "id": 3,
+      "key": "delivery_mode",
+      "type": "single",
+      "skippable": true,
+      "default_letter": "A",
+      "skip_value": "local_docx",
+      "skip_hint": "A 本地 Word（推荐）",
+      "prompt": "报告投递方式（单选）",
+      "options": {
+        "A": { "label": "保存为本地 Word 文档（推荐）", "value": "local_docx", "recommended": true },
+        "B": { "label": "仅保存 Markdown 文件", "value": "local_md_only" },
+        "C": { "label": "飞书群机器人 Webhook 推送摘要", "value": "feishu_webhook" },
+        "D": { "label": "飞书云文档（需企业自建应用）", "value": "feishu_document" }
+      }
+    },
+    {
+      "id": 4,
+      "key": "report_time",
+      "type": "single",
+      "show_when": ["scheduled"],
+      "skippable": true,
+      "default_letter": "A",
+      "skip_value": "09:00",
+      "skip_hint": "A 上午 09:00（推荐）",
+      "prompt": "每天生成报告的时间（数据范围为前一自然日）",
+      "options": {
+        "A": { "label": "上午 09:00（推荐）", "value": "09:00", "recommended": true },
+        "B": { "label": "中午 12:00", "value": "12:00" },
+        "C": { "label": "下午 18:00", "value": "18:00" },
+        "D": { "label": "其他时间（选后需补充 HH:mm）", "value": "custom" }
+      }
+    },
+    {
+      "id": 5,
+      "key": "weekdays_only",
+      "type": "single",
+      "show_when": ["scheduled"],
+      "skippable": true,
+      "default_letter": "A",
+      "skip_value": false,
+      "skip_hint": "A 每天都生成（推荐）",
+      "prompt": "是否仅在工作日生成报告",
+      "options": {
+        "A": { "label": "否，每天都生成（推荐）", "value": false, "recommended": true },
+        "B": { "label": "是，周六日不生成", "value": true }
+      }
+    },
+    {
+      "id": 6,
+      "key": "auto_run",
+      "type": "single",
+      "show_when": ["scheduled"],
+      "skippable": true,
+      "default_letter": "A",
+      "skip_value": true,
+      "skip_hint": "A 自动计划任务（推荐）",
+      "prompt": "是否需要电脑自动定时运行（计划任务）",
+      "options": {
+        "A": { "label": "是，稍后按文档配置 Windows/macOS 计划任务（推荐）", "value": true, "recommended": true },
+        "B": { "label": "否，到点提醒我手动运行", "value": false }
+      }
+    },
+    {
+      "id": 7,
+      "key": "workspace_location",
+      "type": "single",
+      "skippable": true,
+      "default_letter": "A",
+      "skip_value": "desktop_default",
+      "skip_hint": "A 桌面 marketing-analytics-agent（推荐）",
+      "prompt": "数据存放位置（报告、temp、配置均在此文件夹内，子目录结构自动创建）",
+      "options": {
+        "A": { "label": "桌面新建 marketing-analytics-agent 文件夹（推荐）", "value": "desktop_default", "recommended": true },
+        "B": { "label": "自定义文件夹路径", "value": "custom" }
+      }
+    },
+    {
+      "id": 8,
+      "key": "currency",
+      "type": "single",
+      "skippable": true,
+      "default_letter": "A",
+      "skip_value": "USD",
+      "skip_hint": "A USD 美元（推荐）",
+      "prompt": "报告中的默认货币",
+      "options": {
+        "A": { "label": "USD 美元（推荐）", "value": "USD", "recommended": true },
+        "B": { "label": "CNY 人民币", "value": "CNY" }
+      }
+    },
+    {
+      "id": 9,
+      "key": "feishu_ready",
+      "type": "single",
+      "skippable": true,
+      "default_letter": "A",
+      "skip_value": "none",
+      "skip_hint": "A 暂不使用飞书（推荐）",
+      "prompt": "飞书相关",
+      "options": {
+        "A": { "label": "暂不使用飞书（推荐）", "value": "none", "recommended": true },
+        "B": { "label": "已有 Webhook，稍后粘贴地址", "value": "webhook" },
+        "C": { "label": "已有飞书企业自建应用", "value": "document" }
+      }
+    }
+  ],
+  "follow_up": {
+    "description": "字母题答完后补充；支持回车跳过、上一步返回",
+    "fields": [
+      "workspace_root_custom",
+      "reuse_existing_workspace",
+      "google_ads.customer_id",
+      "meta_ads.ad_account_id",
+      "custom_report_time",
+      "feishu.webhook.url"
+    ]
+  }
+}

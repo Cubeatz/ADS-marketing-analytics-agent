@@ -1,0 +1,83 @@
+{
+  "version": "1.0",
+  "description": "跨平台指标字段对照。Agent 拉数后用此文件统一命名后再做对比。",
+  "metrics": {
+    "spend": {
+      "display_name": "花费",
+      "unit": "currency",
+      "google_ads": "metrics.cost_micros",
+      "google_ads_transform": "divide_by_1000000",
+      "meta_ads": "spend",
+      "appsflyer": "cost"
+    },
+    "impressions": {
+      "display_name": "展示",
+      "unit": "count",
+      "google_ads": "metrics.impressions",
+      "meta_ads": "impressions",
+      "appsflyer": null
+    },
+    "clicks": {
+      "display_name": "点击",
+      "unit": "count",
+      "google_ads": "metrics.clicks",
+      "meta_ads": "clicks",
+      "appsflyer": null
+    },
+    "installs": {
+      "display_name": "安装",
+      "unit": "count",
+      "google_ads": "metrics.conversions",
+      "google_ads_note": "需在 Google 侧配置为 install 转化动作",
+      "meta_ads": "actions.mobile_app_install",
+      "appsflyer": "installs"
+    },
+    "cpi": {
+      "display_name": "单次安装成本",
+      "unit": "currency",
+      "formula": "spend / installs",
+      "google_ads": "metrics.cost_per_conversion",
+      "meta_ads": "derived",
+      "appsflyer": "ecpi"
+    },
+    "roas": {
+      "display_name": "广告支出回报率",
+      "unit": "ratio",
+      "formula": "revenue / spend",
+      "google_ads": "metrics.conversions_value / metrics.cost_micros",
+      "meta_ads": "action_values.purchase / spend",
+      "appsflyer": "revenue / cost"
+    },
+    "ctr": {
+      "display_name": "点击率",
+      "unit": "percent",
+      "google_ads": "metrics.ctr",
+      "meta_ads": "ctr",
+      "appsflyer": null
+    },
+    "frequency": {
+      "display_name": "频次",
+      "unit": "count",
+      "google_ads": null,
+      "meta_ads": "frequency",
+      "appsflyer": null
+    }
+  },
+  "meta_actions_mapping": {
+    "mobile_app_install": ["mobile_app_install", "omni_app_install"],
+    "purchase": ["purchase", "omni_purchase"],
+    "add_to_cart": ["add_to_cart", "omni_add_to_cart"]
+  },
+  "appsflyer_dimensions": {
+    "media_source": "media_source",
+    "campaign": "campaign",
+    "adset": "adset",
+    "ad": "ad",
+    "country": "geo",
+    "platform": "platform"
+  },
+  "channel_aliases": {
+    "google": ["googleadwords_int", "Google Ads", "google"],
+    "meta": ["Facebook Ads", "facebook", "instagram", "meta"]
+  }
+}

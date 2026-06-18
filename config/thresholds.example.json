@@ -1,0 +1,37 @@
+{
+  "creative_fatigue": {
+    "observe": {
+      "frequency_min": 2.5,
+      "ctr_drop_pct_min": 10,
+      "description": "频次偏高且点击率下滑，建议关注"
+    },
+    "warning": {
+      "frequency_min": 3.5,
+      "ctr_drop_pct_min": 15,
+      "description": "素材明显疲劳，建议准备轮换"
+    },
+    "critical": {
+      "frequency_min": 4.5,
+      "ctr_drop_pct_min": 25,
+      "description": "严重疲劳，建议尽快更换素材或缩小投放"
+    },
+    "min_impressions": 1000,
+    "lookback_days": 7
+  },
+  "budget": {
+    "high_utilization_pct": 90,
+    "low_utilization_pct": 50,
+    "is_lost_to_budget_pct": 15,
+    "cpa_above_avg_pct": 30,
+    "lookback_days": 7
+  },
+  "attribution_gap": {
+    "normal_pct": 10,
+    "watch_pct": 30,
+    "description": "平台自报 vs AppsFlyer 差异百分比阈值"
+  },
+  "daily_report": {
+    "top_campaigns_limit": 10,
+    "include_week_over_week": true
+  }
+}

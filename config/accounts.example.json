@@ -1,0 +1,30 @@
+{
+  "apps": [
+    {
+      "name": "示例App",
+      "enabled": true,
+      "google_ads": {
+        "customer_id": "1234567890",
+        "login_customer_id": "",
+        "currency": "USD",
+        "timezone": "America/Los_Angeles"
+      },
+      "meta_ads": {
+        "ad_account_id": "act_123456789",
+        "currency": "USD",
+        "timezone": "America/Los_Angeles"
+      },
+      "appsflyer": {
+        "app_id": "id123456789",
+        "android_package": "com.example.app",
+        "ios_bundle_id": "com.example.app"
+      }
+    }
+  ],
+  "defaults": {
+    "report_currency": "USD",
+    "date_timezone": "Asia/Shanghai",
+    "attribution_window_days": 7
+  },
+  "_comment": "复制为 accounts.json 后填写真实 ID。无需数据库，Agent 直接读此文件。"
+}

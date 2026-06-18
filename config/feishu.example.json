@@ -1,0 +1,15 @@
+{
+  "enabled": false,
+  "webhook_url": "",
+  "mention_all": false,
+  "report_title_prefix": "【营销日报】",
+  "docx_fallback": {
+    "enabled": true,
+    "output_dir": "reports/{date}",
+    "filename": "daily-report.docx",
+    "custom_output_dir": "",
+    "_comment_output_dir": "custom_output_dir 填绝对路径如 C:/Users/运营/Desktop/营销日报，优先于 output_dir；留空则用项目内 reports/{date}/"
+  },
+  "_setup_feishu": "飞书群 → 设置 → 群机器人 → 自定义机器人 → 复制 Webhook 到 webhook_url，并设 enabled=true",
+  "_setup_docx": "未配置飞书或 enabled=false 时，自动在 docx_fallback 指定目录生成 Word 文档"
+}

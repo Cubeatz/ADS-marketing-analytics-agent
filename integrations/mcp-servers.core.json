@@ -1,0 +1,75 @@
+{
+  "$schema": "marketing-analytics-agent/mcp-core/v1",
+  "description": "多平台只读 MCP 定义。与 config/ad-platforms.json 中 supported=true 项对应。",
+  "servers": {
+    "google-ads": {
+      "transport": "stdio",
+      "command": "pipx",
+      "args": [
+        "run",
+        "--spec",
+        "git+https://github.com/googleads/google-ads-mcp.git",
+        "google-ads-mcp"
+      ],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}",
+        "GOOGLE_PROJECT_ID": "${GOOGLE_PROJECT_ID}",
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "${GOOGLE_ADS_DEVELOPER_TOKEN}",
+        "GOOGLE_ADS_LOGIN_CUSTOMER_ID": "${GOOGLE_ADS_LOGIN_CUSTOMER_ID}"
+      },
+      "readonly": true,
+      "oauth": "google_adc"
+    },
+    "meta-ads": {
+      "transport": "http",
+      "url": "https://mcp.facebook.com/ads",
+      "readonly": true,
+      "oauth": "meta_business",
+      "note": "OAuth 时选择只读权限；写工具请勿授权"
+    },
+    "adjust": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@bitscorp/mcp-adjust",
+        "--config",
+        "{\"apiKey\":\"${ADJUST_API_TOKEN}\"}"
+      ],
+      "env": {
+        "ADJUST_API_TOKEN": "${ADJUST_API_TOKEN}"
+      },
+      "readonly": true,
+      "note": "需 Adjust API Token，见 https://github.com/bitscorp-mcp/mcp-adjust"
+    },
+    "appsflyer": {
+      "transport": "http",
+      "url": "https://mcp.appsflyer.com/auth/mcp",
+      "readonly": true,
+      "oauth": "appsflyer"
+    },
+    "linkedin-ads": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "ads-mcp"],
+      "optional": true,
+      "note": "自托管 manlikemuneeb/ads-mcp，需 LinkedIn OAuth"
+    },
+    "bing-ads": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-bing-ads"],
+      "optional": true,
+      "note": "自托管 mharnett/mcp-bing-ads"
+    },
+    "reddit-ads": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-reddit-ads"],
+      "optional": true,
+      "note": "自托管 mharnett/mcp-reddit-ads"
+    }
+  }
+}

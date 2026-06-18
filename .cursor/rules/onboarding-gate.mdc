@@ -1,0 +1,56 @@
+---
+description: 首次使用引导。每题默认/推荐均为 A；跳过/Z 等同选 A。
+alwaysApply: true
+---
+
+# 首次使用 — 字母问卷（v1.2）
+
+## 第 0 步：环境检查（先于问卷）
+
+用户首次使用或未 onboarding 时，**先**检查本机环境，再进入问卷：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\check-environment.ps1 -Quiet
+```
+
+- **Python 3.10+ 已就绪** → 不提示、不打扰，直接进入问卷或引导 `onboard.ps1`
+- **缺少 Python** → 用简体中文说明如何安装（Windows / macOS），**停止**问卷与分析，等用户装好后再继续
+
+Agent 在对话中也可运行：`python scripts/check_environment.py --quiet`（有 Python 时）或上述 ps1。
+
+**推荐引导用户运行** `scripts/start.ps1`（一键完成环境检查 + 问卷 + MCP 安装提示）。
+
+可选项（python-docx、Node.js、pipx）仅在缺失时于完整检查中提示，**不阻断**首次问卷。
+
+---
+
+**规则：每题默认项 = 选项 A，文案含「（推荐）」；输入 Z /「跳过」= 等同选 A。**
+
+## 题号一览
+
+| 题 | 内容 | A（推荐） |
+|----|------|-----------|
+| 1 | 平台（多选） | — |
+| 2 | 一次性 / 定时 | A 一次性 |
+| 3 | 投递 | A 本地 Word |
+| 4 | 报告时间（仅定时） | A 09:00 |
+| 5 | 仅工作日（仅定时） | A 每天都生成 |
+| 6 | 自动计划任务（仅定时） | A 是 |
+| 7 | 数据目录 | A 桌面文件夹 |
+| 8 | 货币 | A USD |
+| 9 | 飞书 | A 不用飞书 |
+
+第 2 题选 **A 一次性** → 自动跳过 4–6 题。
+
+## 示例
+
+- 全默认：`1AB 2A 3A 7A 8A 9A` 或 `1AB 2A 3Z 7Z 8Z 9Z`
+- 定时 + 飞书 Webhook：`1AB 2B 3C 4A 5A 6A 7A 8A 9B`
+
+## 第 7 题目录
+
+默认桌面 `marketing-analytics-agent`；已有记录时询问沿用或换目录。
+
+## 平台多选
+
+第 1 题只展示并允许选择已支持平台（A–G），因此无需再做「不支持平台二次确认」。

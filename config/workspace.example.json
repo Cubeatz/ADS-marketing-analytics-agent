@@ -1,0 +1,160 @@
+{
+  "onboarding": {
+    "completed": false,
+    "completed_at": null,
+    "operator_name": "",
+    "notes": "首次使用前运行 scripts/onboard.ps1 或由 Agent 引导完成配置"
+  },
+  "platforms": {
+    "google_ads": {
+      "enabled": false,
+      "customer_id": "",
+      "login_customer_id": "",
+      "required_setup": [
+        "Google Cloud 项目 + 启用 Google Ads API",
+        "gcloud auth application-default login（OAuth）",
+        "Google Ads Developer Token（API Center 申请）",
+        "环境变量：GOOGLE_APPLICATION_CREDENTIALS、GOOGLE_PROJECT_ID、GOOGLE_ADS_DEVELOPER_TOKEN"
+      ]
+    },
+    "meta_ads": {
+      "enabled": false,
+      "ad_account_id": "",
+      "required_setup": [
+        "Meta Business Manager 管理员权限",
+        "MCP 连接 https://mcp.facebook.com/ads 并完成 OAuth",
+        "建议 OAuth 授权时选择【只读】权限"
+      ]
+    },
+    "adjust": {
+      "enabled": false,
+      "app_name": "",
+      "required_setup": [
+        "Adjust 账户 + API Token",
+        "环境变量 ADJUST_API_TOKEN + MCP mcp-adjust"
+      ]
+    },
+    "appsflyer": {
+      "enabled": false,
+      "app_id": "",
+      "required_setup": [
+        "AppsFlyer 账户 OAuth",
+        "MCP https://mcp.appsflyer.com/auth/mcp"
+      ]
+    },
+    "linkedin_ads": {
+      "enabled": false,
+      "ad_account_id": "",
+      "required_setup": [
+        "LinkedIn Marketing API 权限",
+        "自托管 ads-mcp 并完成 OAuth"
+      ]
+    },
+    "bing_ads": {
+      "enabled": false,
+      "account_id": "",
+      "required_setup": [
+        "Microsoft Advertising 开发者账户",
+        "npm 包 mcp-bing-ads 自托管"
+      ]
+    },
+    "reddit_ads": {
+      "enabled": false,
+      "account_id": "",
+      "required_setup": [
+        "Reddit Ads API 权限",
+        "npm 包 mcp-reddit-ads 自托管"
+      ]
+    }
+  },
+  "schedule": {
+    "usage_mode": "one_time",
+    "daily_report_time": null,
+    "timezone": "Asia/Shanghai",
+    "data_period": "on_demand",
+    "weekdays_only": false,
+    "auto_run": false,
+    "_comment": "usage_mode=scheduled 时 data_period=yesterday；auto_run=true 见 docs/SCHEDULED-TASKS.md"
+  },
+  "directories": {
+    "workspace_root": "",
+    "_workspace_root_comment": "空则与项目根目录相同；引导默认 ~/Desktop/marketing-analytics-agent",
+    "reports_md": "reports",
+    "documents": "output/documents",
+    "temp": {
+      "root": "temp",
+      "categories": {
+        "raw": {
+          "path": "temp/raw/{date}/{platform}/{category}",
+          "description": "MCP 原始响应 JSON，按平台+数据类别分子目录"
+        },
+        "processed": {
+          "path": "temp/processed/{date}/{platform}/{category}",
+          "description": "清洗/对齐后的中间数据，供报告引用"
+        },
+        "cache": {
+          "path": "temp/cache/{date}/{platform}",
+          "description": "短期 MCP 查询缓存，避免重复拉数"
+        },
+        "logs": {
+          "path": "temp/logs/{date}",
+          "description": "拉数日志、错误记录"
+        },
+        "exports": {
+          "path": "temp/exports/{date}/{platform}/{category}",
+          "description": "可选 CSV/表格导出"
+        }
+      },
+      "platforms": ["google_ads", "meta_ads", "adjust", "appsflyer", "linkedin_ads", "bing_ads", "reddit_ads"],
+      "categories_by_platform": {
+        "google_ads": ["account", "campaigns", "ad_groups", "keywords", "metrics"],
+        "meta_ads": ["account", "campaigns", "adsets", "ads", "creatives", "insights"],
+        "adjust": ["attribution", "reports", "skan", "cohorts"],
+        "appsflyer": ["attribution", "skan", "cohorts", "events"],
+        "linkedin_ads": ["account", "campaigns", "creatives", "analytics"],
+        "bing_ads": ["account", "campaigns", "keywords", "metrics"],
+        "reddit_ads": ["account", "campaigns", "ads", "metrics"]
+      },
+      "shared_categories": {
+        "processed": ["blended", "comparison"]
+      }
+    },
+    "_rules": {
+      "禁止": "不要把所有 temp 文件堆在同一个文件夹",
+      "必须": "按 类型/日期/平台/数据类别 分层存放，详见 docs/TEMP-LAYOUT.md"
+    }
+  },
+  "delivery": {
+    "mode": "local_docx",
+    "modes": {
+      "local_docx": "生成本地 Word，存到 directories.documents/{date}/",
+      "local_md_only": "仅 Markdown，存到 directories.reports_md/{date}/",
+      "feishu_webhook": "飞书群机器人 Webhook 推送摘要",
+      "feishu_document": "创建飞书云文档（需企业自建应用 app_id/app_secret）"
+    },
+    "local_docx_filename": "daily-report.docx",
+    "report_title_prefix": "【营销日报】"
+  },
+  "feishu": {
+    "webhook": {
+      "enabled": false,
+      "url": "",
+      "mention_all": false
+    },
+    "document": {
+      "enabled": false,
+      "app_id": "",
+      "app_secret": "",
+      "folder_token": "",
+      "_setup": "飞书开放平台创建企业自建应用，开通 docx 权限，获取 folder_token"
+    }
+  },
+  "preferences": {
+    "language": "zh-CN",
+    "currency_display": "USD",
+    "keep_raw_days": 30,
+    "keep_reports_days": 90,
+    "keep_temp_days": 30,
+    "alert_email": ""
+  }
+}

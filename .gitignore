@@ -1,0 +1,23 @@
+# 本地配置（含密钥，勿提交）
+config/accounts.json
+config/thresholds.json
+config/feishu.json
+config/workspace.json
+config/onboarding-extras.json
+config/onboarding-draft.json
+.cursor/mcp.json
+
+# 平台拉取原始数据与输出
+temp/
+output/
+reports/
+cache/
+
+# 系统与 Python
+.DS_Store
+Thumbs.db
+*.log
+__pycache__/
+*.py[cod]
+.env
+.env.*

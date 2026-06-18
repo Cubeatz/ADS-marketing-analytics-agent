@@ -1,0 +1,23 @@
+# 营销数据分析 MCP — Codex 配置片段
+# 合并到 ~/.codex/config.toml 或项目 .codex/config.toml
+# 环境变量在 [mcp_servers.*.env] 中引用，勿硬编码密钥
+
+[mcp_servers.google-ads]
+command = "pipx"
+args = ["run", "--spec", "git+https://github.com/googleads/google-ads-mcp.git", "google-ads-mcp"]
+startup_timeout_sec = 60
+tool_timeout_sec = 120
+
+[mcp_servers.google-ads.env]
+GOOGLE_APPLICATION_CREDENTIALS = "${GOOGLE_APPLICATION_CREDENTIALS}"
+GOOGLE_PROJECT_ID = "${GOOGLE_PROJECT_ID}"
+GOOGLE_ADS_DEVELOPER_TOKEN = "${GOOGLE_ADS_DEVELOPER_TOKEN}"
+GOOGLE_ADS_LOGIN_CUSTOMER_ID = "${GOOGLE_ADS_LOGIN_CUSTOMER_ID}"
+
+[mcp_servers.meta-ads]
+url = "https://mcp.facebook.com/ads"
+startup_timeout_sec = 30
+
+[mcp_servers.appsflyer]
+url = "https://mcp.appsflyer.com/auth/mcp"
+startup_timeout_sec = 30
