@@ -61,11 +61,37 @@ function Invoke-EnsureTempDirs {
     }
 }
 
+function Format-LogValue {
+    param([AllowNull()][object]$Value)
+    $text = [string]$Value
+    $text = $text.Replace("\", "\\").Replace('"', '\"').Replace("`r", " ").Replace("`n", " ")
+    if ([string]::IsNullOrEmpty($text)) { return '""' }
+    if ($text -match "\s|=") { return '"' + $text + '"' }
+    return $text
+}
+
+function New-OperationLogLine {
+    param(
+        [string]$Level,
+        [string]$EventType,
+        [hashtable]$Fields = @{}
+    )
+    $parts = @()
+    foreach ($key in $Fields.Keys) {
+        if ($null -ne $Fields[$key]) {
+            $parts += ("{0}={1}" -f $key, (Format-LogValue $Fields[$key]))
+        }
+    }
+    $prefix = "[{0}] [{1}] {2}" -f (Get-Date).ToString("yyyy-MM-dd HH:mm:ss"), $Level.ToUpperInvariant(), $EventType.ToUpperInvariant()
+    if ($parts.Count -gt 0) { return "$prefix $($parts -join ' ')" }
+    return $prefix
+}
+
 function Write-RunLog {
-    param([string]$Root, [string]$ReportDate, [string]$Message)
+    param([string]$Root, [string]$ReportDate, [string]$Level, [string]$EventType, [hashtable]$Fields = @{})
     $logDir = Join-Path $Root "logs\$ReportDate"
     New-Item -ItemType Directory -Force -Path $logDir | Out-Null
-    $line = "[{0}] {1}" -f (Get-Date).ToString("yyyy-MM-dd HH:mm:ss"), $Message
+    $line = New-OperationLogLine -Level $Level -EventType $EventType -Fields $Fields
     Add-Content -Path (Join-Path $logDir "run.log") -Value $line -Encoding UTF8
 }
 
@@ -98,7 +124,12 @@ Write-Host "开始生成营销日报（时区 $tz，计划时间 $time）..."
 Write-Host "本次数据日期: $($dates -join ', ')"
 foreach ($d in $dates) {
     Invoke-EnsureTempDirs -Root $ProjectRoot -ReportDate $d
-    Write-RunLog -Root $dataRoot -ReportDate $d -Message "计划任务启动，数据日期 $d"
+    Write-RunLog -Root $dataRoot -ReportDate $d -Level "INFO" -EventType "SCHEDULED_REPORT_START" -Fields @{
+        date = $d
+        timezone = $tz
+        scheduled_time = $time
+        mode = $ws.schedule.usage_mode
+    }
 }
 
 $keepLogsDays = 30

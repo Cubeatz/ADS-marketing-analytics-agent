@@ -3,10 +3,28 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
+
+
+def _format_log_value(value: Any) -> str:
+    text = str(value).replace("\\", "\\\\").replace('"', '\\"').replace("\r", " ").replace("\n", " ")
+    if not text:
+        return '""'
+    if re.search(r"\s|=", text):
+        return f'"{text}"'
+    return text
+
+
+def format_log_line(level: str, event_type: str, **fields: Any) -> str:
+    """Format operation logs as: [time] [LEVEL] EVENT_TYPE key=value."""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    pairs = " ".join(f"{key}={_format_log_value(value)}" for key, value in fields.items() if value is not None)
+    prefix = f"[{timestamp}] [{level.upper()}] {event_type.upper()}"
+    return f"{prefix} {pairs}" if pairs else prefix
 
 
 def load_workspace(project_root: Path) -> dict[str, Any]:

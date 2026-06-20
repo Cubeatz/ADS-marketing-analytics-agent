@@ -57,6 +57,7 @@ disable-model-invocation: false
 7. 失败报告写入 `reports/{date}/auth-failed.md`，列出平台、错误摘要、三次尝试结果和用户下一步。
 8. 错误明细写入 `logs/{date}/auth-check.log` 和 `logs/{date}/errors.log`，操作过程写入 `logs/{date}/run.log`。
    可调用 `scripts/write-auth-failure-report.py` 统一生成失败报告和日志。
+   日志格式必须统一为 `[YYYY-MM-DD HH:mm:ss] [LEVEL] EVENT_TYPE key=value key=value error=...`；`LEVEL` 参考 log4j2：`TRACE`、`DEBUG`、`INFO`、`WARN`、`ERROR`、`FATAL`。授权重试写 `WARN`，三次失败停止写 `ERROR`。
 9. 有飞书 webhook 时推送提醒；否则保留本地失败报告。
 
 不能绕过平台 OAuth。Refresh token 失效、授权撤销、密码变化或管理员收回权限时，必须用户重新授权。

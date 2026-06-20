@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from workspace_lib import ensure_operation_log_layout, load_workspace, report_md_dir
+from workspace_lib import ensure_operation_log_layout, format_log_line, load_workspace, report_md_dir
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -36,10 +36,23 @@ def main() -> int:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     log_dir = ensure_operation_log_layout(root, ws, args.date)
-    msg = f"[{now}] AUTH_FAILED platform={args.platform} attempts={args.attempts} error={args.error}"
-    append(log_dir / "auth-check.log", msg)
-    append(log_dir / "errors.log", msg)
-    append(log_dir / "run.log", f"[{now}] 正常日报已停止，已生成授权失败报告。")
+    failed_line = format_log_line(
+        "ERROR",
+        "AUTH_FAILED",
+        platform=args.platform,
+        attempts=args.attempts,
+        error=args.error,
+    )
+    stopped_line = format_log_line(
+        "WARN",
+        "DAILY_REPORT_STOPPED",
+        date=args.date,
+        reason="auth_failed",
+        report="auth-failed.md",
+    )
+    append(log_dir / "auth-check.log", failed_line)
+    append(log_dir / "errors.log", failed_line)
+    append(log_dir / "run.log", stopped_line)
 
     report_dir = report_md_dir(root, ws, args.date)
     report_dir.mkdir(parents=True, exist_ok=True)

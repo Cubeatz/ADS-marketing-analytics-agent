@@ -89,6 +89,8 @@ logs/{YYYY-MM-DD}/
 └─ delivery.log
 ```
 
+全局操作日志统一使用 `[YYYY-MM-DD HH:mm:ss] [LEVEL] EVENT_TYPE key=value ...`。`LEVEL` 参考 log4j2：`TRACE`、`DEBUG`、`INFO`、`WARN`、`ERROR`、`FATAL`；授权重试写 `WARN`，三次失败停止写 `ERROR`。
+
 ## exports：可选导出
 
 ```text

@@ -67,4 +67,20 @@ logs/2026-06-20/errors.log
 logs/2026-06-20/delivery.log
 ```
 
+日志行格式统一为：
+
+```text
+[YYYY-MM-DD HH:mm:ss] [LEVEL] EVENT_TYPE key=value key=value error=...
+```
+
+`LEVEL` 参考 log4j2 常用等级：`TRACE`、`DEBUG`、`INFO`、`WARN`、`ERROR`、`FATAL`。正常进度用 `INFO`，自动重试和可恢复问题用 `WARN`，三次授权恢复失败、任务停止等失败结果用 `ERROR`。包含空格的值使用英文双引号。
+
+示例：
+
+```text
+[2026-06-20 09:00:01] [INFO] SCHEDULED_REPORT_START date=2026-06-19 mode=scheduled
+[2026-06-20 09:00:08] [WARN] AUTH_REFRESH_RETRY platform=meta_ads attempt=1 error="access token expired"
+[2026-06-20 09:00:20] [ERROR] AUTH_FAILED platform=meta_ads attempts=3 error="invalid_grant"
+```
+
 默认只保留 30 天。Agent 每次创建当天日志目录时，会清理超过 `preferences.keep_logs_days` 的旧日志目录。

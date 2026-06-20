@@ -36,6 +36,7 @@ alwaysApply: true
 6. 失败报告写入 `reports/{date}/auth-failed.md`，内容包含失败平台、错误摘要、三次尝试结果和用户下一步。
 7. 错误明细写入 `logs/{date}/auth-check.log` 和 `logs/{date}/errors.log`，当天操作过程写入 `logs/{date}/run.log`。
    可调用 `scripts/write-auth-failure-report.py` 统一生成失败报告和日志。
+   日志格式必须统一为 `[YYYY-MM-DD HH:mm:ss] [LEVEL] EVENT_TYPE key=value key=value error=...`；`LEVEL` 参考 log4j2：`TRACE`、`DEBUG`、`INFO`、`WARN`、`ERROR`、`FATAL`。授权重试写 `WARN`，三次失败停止写 `ERROR`。
 8. 告诉用户哪个平台授权失败、需要去哪个后台或 IDE MCP 面板重新授权。
 9. 已配置飞书时推送失败提醒；未配置飞书时保留本地失败报告。
 
