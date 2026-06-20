@@ -2,7 +2,7 @@
 
 平台拉取的数据不能全部堆在一个文件夹里，必须按 **类型 → 日期 → 平台 → 数据类别** 分层。
 
-Agent 会在拉数或生成日报前自动创建当天所需目录，用户不需要手动创建。
+Agent 会在拉数或生成日报前自动创建当天所需目录，用户不需要手动创建。操作日志不放在 `temp/`，而是单独放在 `logs/{date}/`，方便排查定时任务和授权问题。
 
 ## 总览
 
@@ -70,9 +70,21 @@ temp/cache/{YYYY-MM-DD}/
 
 ## logs：操作日志
 
+`temp/logs/{date}/` 保存拉数过程中的临时日志，例如 MCP 响应错误、清洗错误等。
+
 ```text
 temp/logs/{YYYY-MM-DD}/
 ├─ fetch.log
+├─ errors.log
+└─ delivery.log
+```
+
+全局操作日志单独保存：
+
+```text
+logs/{YYYY-MM-DD}/
+├─ run.log
+├─ auth-check.log
 ├─ errors.log
 └─ delivery.log
 ```
@@ -91,9 +103,12 @@ temp/exports/{YYYY-MM-DD}/
 1. 每次 MCP 调用结果写入对应 `raw/{date}/{platform}/{category}/` 下的独立文件。
 2. 字段对齐、合并后的结果写入 `processed/`。
 3. 查询缓存写入 `cache/`。
-4. 拉数、错误、投递日志写入 `logs/`。
-5. 生成报告时优先读取 `processed/`；没有 processed 时才从 raw 现算。
+4. 拉数临时日志写入 `temp/logs/`。
+5. 定时任务、授权检查、投递结果等操作日志写入 `logs/{date}/`。
+6. 生成报告时优先读取 `processed/`；没有 processed 时才从 raw 现算。
 
 ## 清理
 
 `preferences.keep_temp_days` 默认 30 天。超过保留天数的 `temp/` 日期目录可以由 Agent 清理。
+
+`preferences.keep_logs_days` 默认 30 天。Agent 每次创建当天 `logs/{date}/` 时，会清理超过保留天数的旧日志目录。

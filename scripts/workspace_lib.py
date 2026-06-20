@@ -1,9 +1,10 @@
-"""Workspace configuration helpers: paths, temp layout, and delivery settings."""
+"""Workspace configuration helpers: paths, temp layout, logs, and delivery settings."""
 
 from __future__ import annotations
 
 import json
 import shutil
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -52,7 +53,7 @@ def detect_prior_usage(root: Path) -> dict[str, Any]:
                 markers.append(f"已启用平台：{', '.join(platforms)}")
         except (json.JSONDecodeError, OSError):
             markers.append("存在 config/workspace.json（可能不完整）")
-    for name in ("temp", "reports", "output"):
+    for name in ("temp", "reports", "output", "logs"):
         p = root / name
         if p.is_dir():
             try:
@@ -66,7 +67,7 @@ def detect_prior_usage(root: Path) -> dict[str, Any]:
 def initialize_workspace_root(workspace_root: Path, template_root: Path | None = None) -> Path:
     workspace_root = workspace_root.expanduser().resolve()
     workspace_root.mkdir(parents=True, exist_ok=True)
-    for sub in ("config", "reports", "output/documents"):
+    for sub in ("config", "reports", "output/documents", "logs"):
         (workspace_root / sub).mkdir(parents=True, exist_ok=True)
 
     template_root = template_root or Path(__file__).resolve().parent.parent
@@ -187,6 +188,47 @@ def temp_logs_path(project_root: Path, workspace: dict[str, Any], date: str) -> 
 
 def temp_exports_path(project_root: Path, workspace: dict[str, Any], date: str, platform: str, data_category: str) -> Path:
     return temp_category_path(project_root, workspace, "exports", date, platform, data_category)
+
+
+def operation_logs_root(project_root: Path, workspace: dict[str, Any]) -> Path:
+    dirs = workspace.get("directories") or {}
+    rel = dirs.get("logs") or "logs"
+    return workspace_data_root(project_root, workspace) / rel
+
+
+def operation_log_dir(project_root: Path, workspace: dict[str, Any], date: str) -> Path:
+    return operation_logs_root(project_root, workspace) / date
+
+
+def cleanup_old_operation_logs(project_root: Path, workspace: dict[str, Any], keep_days: int | None = None) -> list[Path]:
+    prefs = workspace.get("preferences") or {}
+    days = keep_days or int(prefs.get("keep_logs_days") or 30)
+    cutoff = datetime.now().date() - timedelta(days=days)
+    root = operation_logs_root(project_root, workspace)
+    removed: list[Path] = []
+    if not root.exists():
+        return removed
+    for child in root.iterdir():
+        if not child.is_dir():
+            continue
+        try:
+            day = datetime.strptime(child.name, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if day < cutoff:
+            shutil.rmtree(child)
+            removed.append(child)
+    return removed
+
+
+def ensure_operation_log_layout(project_root: Path, workspace: dict[str, Any], date: str) -> Path:
+    d = operation_log_dir(project_root, workspace, date)
+    d.mkdir(parents=True, exist_ok=True)
+    for name in ("run.log", "auth-check.log", "errors.log", "delivery.log"):
+        p = d / name
+        if not p.exists():
+            p.touch()
+    return d
 
 
 def ensure_temp_layout(project_root: Path, workspace: dict[str, Any], date: str) -> list[Path]:

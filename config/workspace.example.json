@@ -3,7 +3,7 @@
     "completed": false,
     "completed_at": null,
     "operator_name": "",
-    "notes": "首次使用前运行 scripts/onboard.ps1，或由 Agent 引导完成配置"
+    "notes": "首次使用前让 Agent 完成配置"
   },
   "platforms": {
     "google_ads": {
@@ -12,16 +12,16 @@
       "login_customer_id": "",
       "required_setup": [
         "Google Cloud 项目 + 启用 Google Ads API",
-        "gcloud auth application-default login（OAuth）",
-        "Google Ads Developer Token（API Center 申请）",
-        "仅选择 Google Ads 时才需要设置 GOOGLE_APPLICATION_CREDENTIALS、GOOGLE_PROJECT_ID、GOOGLE_ADS_DEVELOPER_TOKEN"
+        "Google Cloud OAuth / ADC",
+        "Google Ads Developer Token",
+        "仅选择 Google Ads 时才需要 Google Ads 相关凭证"
       ]
     },
     "meta_ads": {
       "enabled": false,
       "ad_account_id": "",
       "required_setup": [
-        "Meta Business Manager 管理员权限",
+        "Meta Business Manager 管理员或广告账户查看权限",
         "MCP 连接 https://mcp.facebook.com/ads 并完成 OAuth",
         "建议 OAuth 授权时选择只读权限"
       ]
@@ -31,7 +31,7 @@
       "app_name": "",
       "required_setup": [
         "Adjust 账户 + API Token",
-        "环境变量 ADJUST_API_TOKEN + MCP mcp-adjust"
+        "环境变量 ADJUST_API_TOKEN"
       ]
     },
     "appsflyer": {
@@ -55,7 +55,7 @@
       "account_id": "",
       "required_setup": [
         "Microsoft Advertising 开发者账户",
-        "npm 包 mcp-bing-ads 自托管"
+        "mcp-bing-ads 自托管"
       ]
     },
     "reddit_ads": {
@@ -63,7 +63,7 @@
       "account_id": "",
       "required_setup": [
         "Reddit Ads API 权限",
-        "npm 包 mcp-reddit-ads 自托管"
+        "mcp-reddit-ads 自托管"
       ]
     },
     "tiktok_ads": {
@@ -71,8 +71,8 @@
       "advertiser_id": "",
       "required_setup": [
         "TikTok for Business / TikTok Ads 账户权限",
-        "使用官方 TikTok Ads MCP Server 或 Agentic Hub 授权入口",
-        "若 IDE 需要 URL 方式配置，请设置 TIKTOK_ADS_MCP_URL"
+        "官方 TikTok Ads MCP Server 或 Agentic Hub 授权入口",
+        "如 IDE 需要 URL 方式配置，设置 TIKTOK_ADS_MCP_URL"
       ]
     },
     "amazon_ads": {
@@ -80,8 +80,8 @@
       "profile_id": "",
       "required_setup": [
         "Amazon Ads 账户和 Amazon Ads API 凭证",
-        "使用官方 Amazon Ads MCP Server open beta",
-        "若 IDE 需要 URL 方式配置，请设置 AMAZON_ADS_MCP_URL"
+        "官方 Amazon Ads MCP Server open beta",
+        "如 IDE 需要 URL 方式配置，设置 AMAZON_ADS_MCP_URL"
       ]
     }
   },
@@ -99,6 +99,7 @@
     "_workspace_root_comment": "留空则与项目根目录相同；引导默认 ~/Desktop/marketing-analytics-agent",
     "reports_md": "reports",
     "documents": "output/documents",
+    "logs": "logs",
     "temp": {
       "root": "temp",
       "categories": {
@@ -116,7 +117,7 @@
         },
         "logs": {
           "path": "temp/logs/{date}",
-          "description": "拉数日志、错误记录"
+          "description": "拉数日志、错误记录；全局操作日志另见 logs/{date}/"
         },
         "exports": {
           "path": "temp/exports/{date}/{platform}/{category}",
@@ -141,7 +142,7 @@
     },
     "_rules": {
       "禁止": "不要把所有 temp 文件堆在同一个文件夹",
-      "必须": "按 类型/日期/平台/数据类别 分层存放，详见 docs/TEMP-LAYOUT.md"
+      "必须": "按 类型/日期/平台/数据类别 分层存放，操作日志按 logs/{date}/ 存放"
     }
   },
   "delivery": {
@@ -175,6 +176,7 @@
     "keep_raw_days": 30,
     "keep_reports_days": 90,
     "keep_temp_days": 30,
+    "keep_logs_days": 30,
     "alert_email": ""
   }
 }

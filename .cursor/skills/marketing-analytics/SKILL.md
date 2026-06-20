@@ -53,8 +53,11 @@ disable-model-invocation: false
 3. 最多尝试 3 次。
 4. 每次失败写入 `temp/logs/{date}/auth-check.log`。
 5. 三次内成功则继续拉数。
-6. 三次失败则停止日报，不生成假报告，并明确告诉用户需要重新授权的平台。
-7. 有飞书 webhook 时推送提醒；否则写入 `reports/{date}/auth-failed.md`。
+6. 三次失败则停止正常日报，但必须生成空报告/失败报告。
+7. 失败报告写入 `reports/{date}/auth-failed.md`，列出平台、错误摘要、三次尝试结果和用户下一步。
+8. 错误明细写入 `logs/{date}/auth-check.log` 和 `logs/{date}/errors.log`，操作过程写入 `logs/{date}/run.log`。
+   可调用 `scripts/write-auth-failure-report.py` 统一生成失败报告和日志。
+9. 有飞书 webhook 时推送提醒；否则保留本地失败报告。
 
 不能绕过平台 OAuth。Refresh token 失效、授权撤销、密码变化或管理员收回权限时，必须用户重新授权。
 
@@ -63,11 +66,13 @@ disable-model-invocation: false
 1. 检查 onboarding 已完成。
 2. 创建当日 `temp/raw|processed|cache|logs|exports` 分层目录。
 3. 执行授权健康检查。
-4. 读取 workspace 和 accounts，对启用平台通过 MCP 只读拉数。
-5. 原始 JSON 写入 `temp/raw/{date}/{platform}/{category}/`，禁止混放。
-6. 清洗结果写入 `temp/processed/`，日志写入 `temp/logs/{date}/`。
-7. 分析结果写入 `reports/{date}/`。
-8. 按 delivery mode 投递飞书、Word 或 Markdown。
+4. 创建 `logs/{date}/` 操作日志目录，并清理超过保留期的旧日志。
+5. 授权恢复三次失败时，生成空报告/失败报告并停止正常日报。
+6. 读取 workspace 和 accounts，对启用平台通过 MCP 只读拉数。
+7. 原始 JSON 写入 `temp/raw/{date}/{platform}/{category}/`，禁止混放。
+8. 清洗结果写入 `temp/processed/`，拉数日志写入 `temp/logs/{date}/`，操作日志写入 `logs/{date}/`。
+9. 分析结果写入 `reports/{date}/`。
+10. 按 delivery mode 投递飞书、Word 或 Markdown。
 
 ## 分析模块
 

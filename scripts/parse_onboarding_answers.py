@@ -481,6 +481,7 @@ def build_workspace(
             "workspace_root": str(workspace_root),
             "reports_md": "reports",
             "documents": documents,
+            "logs": "logs",
             "temp": example["directories"]["temp"],
         },
         "delivery": {
@@ -507,6 +508,7 @@ def build_workspace(
             "keep_raw_days": 30,
             "keep_reports_days": 90,
             "keep_temp_days": 30,
+            "keep_logs_days": 30,
             "alert_email": extras.get("alert_email") or "",
         },
     }

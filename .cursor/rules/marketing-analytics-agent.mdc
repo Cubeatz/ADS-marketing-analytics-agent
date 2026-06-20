@@ -32,9 +32,12 @@ alwaysApply: true
 2. 如果发现 token 过期、401/403、invalid_grant、OAuth required 等授权错误，先尝试刷新或重新获取 token。
 3. 最多尝试 3 次。每次失败写入 `temp/logs/{date}/auth-check.log`。
 4. 三次内恢复成功，继续拉数。
-5. 三次全部失败，停止日报流程，不生成假报告。
-6. 告诉用户哪个平台授权失败、需要去哪个后台或 IDE MCP 面板重新授权。
-7. 已配置飞书时推送失败提醒；否则写入 `reports/{date}/auth-failed.md`。
+5. 三次全部失败，停止正常日报流程，但必须生成空报告/失败报告。
+6. 失败报告写入 `reports/{date}/auth-failed.md`，内容包含失败平台、错误摘要、三次尝试结果和用户下一步。
+7. 错误明细写入 `logs/{date}/auth-check.log` 和 `logs/{date}/errors.log`，当天操作过程写入 `logs/{date}/run.log`。
+   可调用 `scripts/write-auth-failure-report.py` 统一生成失败报告和日志。
+8. 告诉用户哪个平台授权失败、需要去哪个后台或 IDE MCP 面板重新授权。
+9. 已配置飞书时推送失败提醒；未配置飞书时保留本地失败报告。
 
 不能绕过平台 OAuth；refresh token 失效、授权撤销、密码变化或管理员收回权限时，必须用户重新授权。
 
@@ -66,9 +69,11 @@ alwaysApply: true
 1. 读取 `config/workspace.json`、`config/accounts.json`、`config/field-mapping.json`、`config/thresholds.json`。
 2. 拉数前运行 `scripts/ensure-temp-dirs.ps1 -Date {YYYY-MM-DD}` 创建分层目录。
 3. 先做授权健康检查，失败按三次重试规则处理。
-4. 按 workspace 启用平台只读拉数。
-5. 原始 JSON 写入 `temp/raw/{date}/{platform}/{category}/`，清洗结果写入 `temp/processed/`，日志写入 `temp/logs/`。
-6. 生成 `reports/YYYY-MM-DD/daily-report.md` 和结构化摘要。
-7. 运行 `scripts/deliver-report.ps1`，按配置推送飞书或生成 DOCX。
+4. 创建 `logs/{date}/` 操作日志目录并清理超过 30 天的旧日志。
+5. 三次授权恢复失败时，生成空报告/失败报告并停止正常日报。
+6. 按 workspace 启用平台只读拉数。
+7. 原始 JSON 写入 `temp/raw/{date}/{platform}/{category}/`，清洗结果写入 `temp/processed/`，拉数日志写入 `temp/logs/`，操作日志写入 `logs/{date}/`。
+8. 生成 `reports/YYYY-MM-DD/daily-report.md` 和结构化摘要。
+9. 运行 `scripts/deliver-report.ps1`，按配置推送飞书或生成 DOCX。
 
 禁止把所有 JSON 堆在同一个文件夹；目录规范见 `docs/TEMP-LAYOUT.md`。

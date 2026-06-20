@@ -11,6 +11,7 @@ config/onboarding-draft.json
 temp/
 output/
 reports/
+logs/
 cache/
 
 # 系统与 Python
