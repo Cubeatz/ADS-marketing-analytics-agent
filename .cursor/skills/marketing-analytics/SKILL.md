@@ -1,8 +1,8 @@
 ---
 name: marketing-analytics
 description: >-
-  营销只读数据分析工作流：Google Ads + Meta Ads + AppsFlyer 日报、素材疲劳、
-  预算建议、归因对比、飞书推送或 DOCX 导出。无数据库，读 config/ 下 JSON 配置。
+  只读营销数据分析工作流：首次配置、MCP 安装、广告/归因平台拉数、日报、素材疲劳、
+  预算建议、归因对比、飞书推送或 DOCX 导出。服务对象是非技术广告投放人员。
 disable-model-invocation: false
 ---
 
@@ -10,142 +10,76 @@ disable-model-invocation: false
 
 ## 何时启用
 
-- 用户说「首次配置」「初始化」「设置 agent」
-- `config/workspace.json` 不存在或未完成 onboarding
-- 营销日报 / 数据分析 / 素材疲劳 / 归因对比等
+- 用户说“首次配置”“初始化”“设置 agent”“帮我装好”
+- `config/workspace.json` 不存在或 onboarding 未完成
+- 用户请求营销日报、素材疲劳、预算建议、归因对比、飞书推送或 DOCX 报告
+
+## 交互原则
+
+- 面向非技术用户时，Agent 自动运行脚本，不把命令丢给用户。
+- 只有平台 OAuth、API Token、账户 ID、系统权限确认这类必须用户参与的环节，才请用户操作。
+- 用户问平台凭证来源时，引用 `docs/PLATFORM-CREDENTIALS.md`。
+- 用户问平台支持状态时，引用 `docs/AD-PLATFORMS.md`。
 
 ## 配置文件
 
 | 文件 | 作用 |
 |------|------|
-| `config/workspace.json` | **总配置**（平台、目录、时间、投递） |
+| `config/workspace.json` | 总配置：平台、目录、时间、投递 |
 | `config/accounts.json` | App 与各平台账户 ID |
 | `config/field-mapping.json` | 跨平台指标字段对照 |
 | `config/thresholds.json` | 分析阈值 |
 | `config/feishu.json` | 飞书 Webhook |
 
-首次使用前，从 `*.example.json` 复制并填写，或运行 `scripts/onboard.ps1`。
+## 首次引导
 
-## 工作流 0：首次引导（优先）
+若 onboarding 未完成：
 
-若 `workspace.json` → `onboarding.completed` 不为 true：
+1. 自动检查环境。
+2. 自动启动首次问卷。
+3. 第 1 题只展示 `config/ad-platforms.json` 中已支持平台。
+4. 根据用户选择生成 workspace 和 MCP 配置。
+5. 缺少平台 OAuth / token 时，告诉用户去哪个后台获取。
 
-0. **环境检查**：`scripts/check-environment.ps1 -Quiet`（齐全则静默；缺 Python 则提示安装并停止）
-1. **一键引导**：`scripts/start.ps1`；或 **逐题**问卷 `onboard.ps1`
-2. 第 2–8 题可跳过（Z = 默认）；第 1 题不可跳过
-3. 第 1 题只展示已支持平台（A–G）；若用户手输无效字母（如 H）则提示重选；**单选题**选错须重选
-4. 校验：`python scripts/parse_onboarding_answers.py --validate-only`
+当前支持平台：Google Ads、Meta Ads、Adjust、AppsFlyer、LinkedIn Ads、Microsoft Advertising、Reddit Ads、TikTok Ads、Amazon Ads。
 
-## 工作流 A：生成日报
+## 日报工作流
 
-```
-0. 检查 workspace onboarding 已完成
-1. ensure-temp-dirs → 创建 temp/raw|processed|cache|logs|exports 全部分类子目录
-2. 读 workspace + accounts，对每个启用平台 MCP 拉数
-3. 原始 JSON → temp/raw/{date}/{platform}/{category}/（每类独立文件，禁止混放）
-4. 清洗 → temp/processed/；日志 → temp/logs/{date}/fetch.log
-5. 分析 → reports/{date}/
-6. deliver-report 按 delivery.mode 投递
-```
+1. 检查 onboarding 已完成。
+2. 创建当日 `temp/raw|processed|cache|logs|exports` 分层目录。
+3. 读取 workspace 和 accounts，对启用平台通过 MCP 只读拉数。
+4. 原始 JSON 写入 `temp/raw/{date}/{platform}/{category}/`，禁止混放。
+5. 清洗结果写入 `temp/processed/`，日志写入 `temp/logs/{date}/`。
+6. 分析结果写入 `reports/{date}/`。
+7. 按 delivery mode 投递飞书、Word 或 Markdown。
 
-## 工作流 B：素材疲劳分析
+## 分析模块
 
-读取 `config/thresholds.json` → `creative_fatigue`：
+### 素材疲劳
 
-| 等级 | 条件（满足任一） |
-|------|------------------|
-| 观察 | frequency ≥ 2.5 且 CTR 7日环比降 ≥ 10% |
-| 预警 | frequency ≥ 3.5 且 CTR 7日环比降 ≥ 15% |
-| 严重 | frequency ≥ 4.5 或 CTR 7日环比降 ≥ 25% |
+读取 `config/thresholds.json` 的 `creative_fatigue` 阈值。输出 ad 名称、投放天数、frequency、CTR 变化、疲劳等级和建议。
 
-输出表格：Ad 名称 | 投放天数 | Frequency | CTR 变化 | 等级 | 建议
+建议只能是文字建议，例如“考虑轮换素材 / 缩小受众 / 降低预算”，不得执行任何广告账户写操作。
 
-建议仅文字：「考虑轮换素材 / 缩小受众 / 降低预算」，不执行任何操作。
+### 预算建议
 
-## 工作流 C：预算建议
+读取 `config/thresholds.json` 的 `budget` 阈值。输出预算不足、预算浪费、正常观察等判断，并说明依据。
 
-读取 `config/thresholds.json` → `budget`：
+### 归因差异
 
-| 信号 | 条件 | 建议 |
-|------|------|------|
-| 预算不足 | 利用率 ≥ 90% 且 IS lost to budget > 15%（Google） | 建议加预算 XX% |
-| 预算浪费 | 利用率 < 50% 且 CPA 高于账户均值 30%+ | 建议减预算或暂停 |
-| 正常 | 其他 | 维持观察 |
+使用 `config/field-mapping.json` 对齐字段后，对比平台自报和 MMP 数据。说明可能原因，例如归因窗口、时区、SKAN 延迟、事件映射等。
 
-## 工作流 D：归因差异
+## 报告投递
 
-使用 `config/field-mapping.json` 对齐字段后对比：
+统一使用项目投递脚本。逻辑：
 
-```
-差异% = (平台自报 - AppsFlyer) / AppsFlyer × 100
-```
+1. 飞书 webhook 有效时推送飞书。
+2. 否则生成本地 Word。
+3. 仍需保留 Markdown 报告和结构化摘要。
 
-| 差异范围 | 解读 |
-|----------|------|
-| ±10% 以内 | 正常波动 |
-| 10–30% | 关注（归因窗口 / 时区 / SKAN 延迟） |
-| >30% | 需排查（追踪链接、事件映射、重复计数） |
+## 输出质量
 
-## 报告投递（飞书 / DOCX）
-
-统一入口 `scripts/deliver-report.ps1` 或 `deliver-report.sh`：
-
-1. `config/feishu.json` 中 `enabled=true` 且 `webhook_url` 有效 → 飞书推送
-2. 否则 → 生成 Word（`docx_fallback`）
-
-**DOCX 输出配置**（`config/feishu.json`）：
-
-```json
-"docx_fallback": {
-  "enabled": true,
-  "output_dir": "reports/{date}",
-  "filename": "daily-report.docx",
-  "custom_output_dir": "C:/Users/运营/Desktop/营销日报"
-}
-```
-
-`custom_output_dir` 留空则输出到项目内 `reports/{date}/daily-report.docx`。
-
-Windows:
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\deliver-report.ps1 -Date 2026-06-17
-```
-
-macOS/Linux:
-```bash
-bash scripts/deliver-report.sh 2026-06-17
-```
-
-仅导出 DOCX:
-```bash
-python scripts/export-report-docx.py --date 2026-06-17
-```
-
-## MCP 查询参考
-
-### Google Ads（只读 GAQL 示例）
-
-```
-SELECT campaign.name, metrics.cost_micros, metrics.impressions,
-       metrics.clicks, metrics.conversions, metrics.cost_per_conversion
-FROM campaign
-WHERE segments.date DURING LAST_7_DAYS
-  AND campaign.status = 'ENABLED'
-```
-
-### Meta Ads（insights 参数）
-
-- level: campaign / adset / ad
-- fields: spend, impressions, clicks, ctr, cpm, frequency, actions, action_values
-- date_preset: yesterday / last_7d
-
-### AppsFlyer
-
-- 按 MCP 可用工具查询：installs by media_source, cost, revenue, SKAN data
-- 时间范围与 Google/Meta 对齐后再做对比
-
-## 输出质量要求
-
-- 数字保留 2 位小数（金额、百分比）
-- 每条建议说明 **依据**（哪条数据、哪个阈值）
-- 非技术人员能读懂，避免 API 字段原名堆砌（用 field-mapping 里的 display_name）
+- 中文输出，非技术人员能读懂。
+- 金额、比例保留 2 位小数。
+- 每条建议说明依据。
+- 不堆 API 字段原名，优先使用 `field-mapping.json` 中的 display name。

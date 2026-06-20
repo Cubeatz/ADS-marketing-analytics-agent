@@ -1,80 +1,47 @@
 # IDE 集成模板
 
-本目录包含各 AI 客户端的 MCP 配置模板。不要提交含真实密钥的配置。
+本目录包含各 AI 客户端的 MCP 配置模板和生成结果。普通广告投放用户不需要直接编辑这些文件；Agent 会根据首次配置结果自动生成。
 
-## 使用
+## Agent 使用方式
 
-```powershell
-# Windows：安装全部 IDE 配置
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Ide all
+当用户说“帮我安装 MCP 到某个 IDE”时，Agent 应该：
 
-# 只装 Codex + Trae
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Ide codex,trae
+1. 读取 `config/workspace.json`，确认已启用平台。
+2. 读取 `integrations/mcp-servers.core.json`。
+3. 调用项目安装脚本生成目标 IDE 的 MCP 配置。
+4. 检查生成文件是否包含已选平台。
+5. 对需要用户 OAuth 的平台，引导用户在 IDE 里完成授权。
 
-# 中国大陆常用 IDE：生成可复制 JSON
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Ide trae
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Ide qoder
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Ide marscode
-```
-
-```bash
-bash scripts/install.sh codex
-bash scripts/install.sh antigravity
-bash scripts/install.sh trae
-```
+不要让非技术用户自己复制安装命令。
 
 ## 核心 MCP 定义
 
-核心定义见 `mcp-servers.core.json`。安装脚本会根据 `config/workspace.json` 中已启用的平台生成对应 IDE 的 MCP 配置。
+核心定义见：[mcp-servers.core.json](mcp-servers.core.json)。
+
+安装脚本会根据 `config/workspace.json` 中已启用的平台生成对应 IDE 的 MCP 配置。如果首次配置尚未完成，则生成全量模板，方便后续选择。
 
 ## Trae / 通义灵码 / MarsCode
 
-这些客户端通常通过 IDE 内的 MCP / 工具 / 服务配置页面添加服务。本项目不强行写入未知本地配置目录，而是生成可复制配置：
+这些客户端的本地配置路径在不同版本中可能不同。本项目不强行写入未知目录，而是生成可复制配置：
 
-| 客户端 | 生成文件 | 安装命令 |
-|--------|----------|----------|
-| Trae / Trae CN | `integrations/trae/mcp.json` | `scripts/install.ps1 -Ide trae` |
-| 通义灵码 / Qoder CN | `integrations/qoder-cn/mcp.json` | `scripts/install.ps1 -Ide qoder` 或 `-Ide lingma` |
-| MarsCode | `integrations/marscode/mcp.json` | `scripts/install.ps1 -Ide marscode` |
+| 客户端 | 生成文件 |
+|--------|----------|
+| Trae / Trae CN | `integrations/trae/mcp.json` |
+| 通义灵码 / Qoder CN | `integrations/qoder-cn/mcp.json` |
+| MarsCode | `integrations/marscode/mcp.json` |
 
-打开对应 IDE 的 MCP / 工具 / 服务配置页面，手动粘贴 JSON 中的 `mcpServers`。
+Agent 应告诉用户打开对应 IDE 的 MCP / 工具 / 服务配置页面，并导入 JSON 中的 `mcpServers`。
 
 ## 平台凭证
 
-只配置首次问卷中选择的平台。
+只配置首次问卷中选择的平台。各平台凭证来源见：[各平台凭证配置指南](../docs/PLATFORM-CREDENTIALS.md)。
 
-### Google Ads
+常见情况：
 
-仅选择 Google Ads 时需要：
+- Meta / AppsFlyer 通常在 IDE 的 MCP OAuth 页面完成授权。
+- Google Ads 需要 Google Cloud ADC、Developer Token 和 Customer ID。
+- Adjust 需要 `ADJUST_API_TOKEN`。
+- TikTok Ads 如需 URL 配置，使用 `TIKTOK_ADS_MCP_URL`。
+- Amazon Ads 如需 URL 配置，使用 `AMAZON_ADS_MCP_URL`。
 
-```powershell
-$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\Users\你\.config\gcloud\application_default_credentials.json"
-$env:GOOGLE_PROJECT_ID = "your-gcp-project"
-$env:GOOGLE_ADS_DEVELOPER_TOKEN = "your-token"
-```
-
-### Adjust
-
-仅选择 Adjust 时需要：
-
-```powershell
-$env:ADJUST_API_TOKEN = "your-adjust-token"
-```
-
-### TikTok Ads
-
-仅选择 TikTok Ads 时需要使用 TikTok 官方 MCP / Agentic Hub 授权入口。若 IDE 需要 URL 方式配置：
-
-```powershell
-$env:TIKTOK_ADS_MCP_URL = "官方提供的 MCP URL"
-```
-
-### Amazon Ads
-
-仅选择 Amazon Ads 时需要 Amazon Ads API 凭证和官方/伙伴/自托管 MCP 端点：
-
-```powershell
-$env:AMAZON_ADS_MCP_URL = "官方或伙伴提供的 MCP URL"
-```
-
-Meta / AppsFlyer 通常在 IDE 的 MCP OAuth 页面完成授权；LinkedIn / Microsoft / Reddit 按对应自托管 MCP 的说明准备 OAuth / Token。
+不要把真实 token、secret、webhook 提交到 GitHub。

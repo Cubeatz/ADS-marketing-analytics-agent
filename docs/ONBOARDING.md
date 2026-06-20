@@ -1,72 +1,96 @@
-# 首次使用引导
+# 首次问卷说明
 
-## 一键启动（推荐）
+首次使用时，用户可以直接对 Agent 说：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\start.ps1
+```text
+帮我完成首次配置
 ```
 
-流程：**环境检查**（齐全则静默）→ **字母问卷** → **安装 MCP** → 提示下一步。
+Agent 会自动启动问卷，并把答案写入本地配置。用户不需要自己运行脚本。
 
-参数示例：
+## 问卷会问什么
 
-```powershell
-# 跳过 MCP 安装（只做问卷）
-powershell -ExecutionPolicy Bypass -File scripts\start.ps1 -SkipInstall
+| 题号 | 内容 | 默认推荐 |
+|------|------|----------|
+| 1 | 选择平台，可多选 | 按实际投放平台选择 |
+| 2 | 一次性使用 / 定时使用 | 一次性使用 |
+| 3 | 报告投递方式 | 本地 Word |
+| 4 | 报告时间，仅定时使用时询问 | 09:00 |
+| 5 | 是否仅工作日生成，仅定时使用时询问 | 每天都生成 |
+| 6 | 是否配置自动计划任务，仅定时使用时询问 | 是 |
+| 7 | 数据目录 | 桌面 `marketing-analytics-agent` 文件夹 |
+| 8 | 报告货币 | USD |
+| 9 | 飞书 | 暂不使用飞书 |
 
-# 指定 IDE
-powershell -ExecutionPolicy Bypass -File scripts\start.ps1 -Ide codex
+第 2 题选择“一次性使用”时，会自动跳过报告时间、工作日、自动计划任务三题。
+
+## 平台选择
+
+第 1 题只展示当前已支持平台：
+
+- A Google Ads
+- B Meta Ads
+- C Adjust
+- D AppsFlyer
+- E LinkedIn Ads
+- F Microsoft Advertising
+- G Reddit Ads
+- H TikTok Ads
+- I Amazon Ads
+
+暂不支持平台和原因见：[平台支持清单](AD-PLATFORMS.md)。
+
+## 一次性使用
+
+如果选择一次性使用，Agent 还会继续问：
+
+- 单天还是多天
+- 如果是单天，默认昨天
+- 如果是多天，默认最近 3 天
+
+之后用户可以随时说：
+
+```text
+生成昨日营销日报
 ```
 
-macOS/Linux：`bash scripts/start.sh`
+或：
 
-## 第 0 步：环境检查
-
-向导会在开始前自动检查本机环境；也可单独运行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\check-environment.ps1 -Quiet
+```text
+生成最近 3 天营销日报
 ```
 
-| 结果 | 行为 |
-|------|------|
-| Python 3.10+ 已安装 | 无输出，继续配置 |
-| 未安装 Python | 显示安装说明，退出；装好 Python 后重新运行 `onboard.ps1` |
+## 定时使用
 
-导出 Word 还需 `pip install -r requirements.txt`；连接广告 MCP 还需 Node.js / pipx（见 `docs/SETUP.md`），这些**不阻断**首次问卷。
+如果选择定时使用，Agent 会继续确认：
 
-## 新问卷结构（v1.2）
+- 每天几点生成
+- 是否只在工作日生成
+- 是否需要自动计划任务
 
-| 题 | 内容 |
-|----|------|
-| 1 | 平台（多选） |
-| 2 | **一次性 / 定时** ← 决定后面是否问报告时间 |
-| 3 | 投递方式 |
-| 4–6 | 报告时间、工作日、自动运行（**仅定时**） |
-| 7 | **桌面 marketing-analytics-agent 文件夹**（可自定义） |
-| 8–9 | 货币、飞书 |
+计划任务说明见：[定时任务配置](SCHEDULED-TASKS.md)。
 
-### 一次性（2A）
+## 目录选择
 
-自动跳过 4–6 题，并继续追问数据范围：
+默认使用桌面 `marketing-analytics-agent` 文件夹。若该文件夹已有历史数据，Agent 会询问是否沿用；如果不沿用，会让用户提供新目录。
 
-- 先问：**单天** 还是 **多天**
-- 若选多天：问“哪几天”，默认 **前 3 天**
-- 若选单天：问“哪一天”，默认 **昨天**
+目录内部会自动创建：
 
-### 定时（2B）
+- `temp/`
+- `reports/`
+- `output/documents/`
+- `config/`
 
-继续问每天几点生成、是否仅工作日、是否配置计划任务自动运行。
+目录规范见：[临时数据目录规范](TEMP-LAYOUT.md)。
 
-### 目录（第 7 题）
+## 答案示例
 
-- 默认在**桌面**创建 `marketing-analytics-agent`
-- 若该文件夹**已有历史数据**，会询问是否**继续使用**；选「否」则填写新路径
-- 其内仍按原规范分子目录：`temp/`、`reports/`、`output/documents/` 等
+如果 Agent 需要紧凑答案，可以使用：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\onboard.ps1
-python scripts/parse_onboarding_answers.py --interactive
+```text
+1AB 2A 3A 7A 8A 9A
 ```
 
-示例：`1AB 2A 3A 7A 8A 9A`（全选推荐项 A；Z 等同 A）
+含义是：选择 Google + Meta、一次性使用、本地 Word、默认桌面目录、USD、不使用飞书。
+
+这只是 Agent 自动化时的内部格式，普通用户不需要记。

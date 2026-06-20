@@ -1,27 +1,39 @@
-# Windows 计划任务（可选）
+# 定时任务配置
 
-若 `workspace.json` 中 `schedule.auto_run = true`，可用本机计划任务在指定时间自动生成日报。
+如果你希望每天自动生成日报，直接对 Agent 说：
+
+```text
+帮我配置每天早上 9 点自动生成日报
+```
+
+Agent 会根据 `config/workspace.json` 的设置创建或指导创建系统计划任务。
 
 ## 前提
 
-- 已完成 `scripts/onboard.ps1` 引导
-- MCP 已连接且 OAuth 有效
-- Python 与 `pip install -r requirements.txt` 已安装
+- 首次配置已完成。
+- 已选平台的 MCP / OAuth / API Token 可用。
+- 报告交付方式已确认：本地 Word、飞书 Webhook 或 Markdown。
 
-## 创建每日任务（PowerShell 管理员）
+## Agent 会做什么
 
-将下面命令中的路径改为你的项目目录：
+| 步骤 | 行为 |
+|------|------|
+| 检查配置 | 确认 `schedule.auto_run`、报告时间、数据目录 |
+| 检查脚本 | 确认日报脚本可用 |
+| 创建计划任务 | Windows 使用 Task Scheduler；macOS/Linux 使用对应系统任务方式 |
+| 试跑 | 生成一份测试日报或验证脚本能启动 |
+| 告知风险 | 提醒 OAuth token 过期时需要重新授权 |
 
-```powershell
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File C:\path\to\marketing-analytics-agent\scripts\run-daily-report.ps1"
-$trigger = New-ScheduledTaskTrigger -Daily -At "09:00"
-Register-ScheduledTask -TaskName "MarketingDailyReport" -Action $action -Trigger $trigger -Description "营销数据分析 Agent 自动生成日报"
+## 需要用户介入的情况
+
+有些系统会要求管理员权限或安全确认。遇到这种情况，Agent 会说明需要点击哪个确认按钮，或提示联系电脑管理员。
+
+## 验证
+
+配置完成后，对 Agent 说：
+
+```text
+检查自动日报是否配置成功
 ```
 
-## 手动试跑
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\run-daily-report.ps1
-```
-
-注意：计划任务运行时需已登录且 IDE/MCP OAuth token 未过期；部分 MCP 长期无交互可能需重新授权。
+Agent 会检查计划任务是否存在、下次运行时间是否正确，以及最近一次运行日志。

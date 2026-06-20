@@ -1,128 +1,68 @@
-# 远端部署指南（全 IDE）
+# 部署与配置指南
 
-这份指南面向非技术广告投放人员。你不需要安装数据库，只需要这个项目文件夹，以及首次配置中已选择平台所需的 OAuth / API Token。
-
-## 第一步：首次配置
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\onboard.ps1
-```
-
-向导会询问：平台选择、账户 ID、报告时间、文件目录、飞书或本地 Word、其他偏好。详见 `docs/ONBOARDING.md`。
-
-## 第二步：准备基础环境
-
-Windows：
-
-```powershell
-node --version
-python --version
-pip install pipx
-pipx ensurepath
-```
-
-macOS：
-
-```bash
-brew install node python pipx
-pipx ensurepath
-```
-
-## 第三步：按已选平台准备凭证
-
-只配置你在首次问卷第 1 题选择的平台；未选择的平台可以跳过。
-
-### Google Ads（仅选择 Google Ads 时）
-
-安装 Google Cloud CLI 后执行一次：
-
-```powershell
-gcloud auth application-default login --scopes https://www.googleapis.com/auth/adwords,https://www.googleapis.com/auth/cloud-platform
-```
-
-还需要在 Google Ads API Center 申请 Developer Token。安装前设置：
-
-```powershell
-$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\Users\你\.config\gcloud\application_default_credentials.json"
-$env:GOOGLE_PROJECT_ID = "你的GCP项目ID"
-$env:GOOGLE_ADS_DEVELOPER_TOKEN = "你的开发者令牌"
-```
-
-### Meta Ads（仅选择 Meta 时）
-
-在对应 IDE 的 MCP/OAuth 页面连接：
+这份文档面向广告投放人员和协助他们的 Agent。普通用户不需要照着命令操作；你可以直接对 Agent 说：
 
 ```text
-https://mcp.facebook.com/ads
+帮我完成首次配置
 ```
 
-授权时选择只读权限。
+Agent 会自动完成环境检查、问卷、MCP 配置生成、目录创建和基础验证。只有平台 OAuth、API Token、账户 ID 这类必须登录广告后台获取的信息，需要你自己复制给 Agent 或填到本地配置里。
 
-### Adjust（仅选择 Adjust 时）
+## Agent 会自动做什么
 
-```powershell
-$env:ADJUST_API_TOKEN = "你的 Adjust API Token"
-```
+| 阶段 | Agent 自动处理 | 用户只需要做 |
+|------|---------------|--------------|
+| 环境检查 | 检查 Python、Node.js、pipx 和 DOCX 依赖 | 缺软件时按提示安装 |
+| 首次问卷 | 询问平台、报告方式、数据目录、货币、飞书 | 根据实际业务回答 |
+| 平台配置 | 生成 `config/workspace.json`、`config/accounts.json` 骨架 | 提供账户 ID、token 或 OAuth 授权 |
+| MCP 安装 | 按 IDE 生成 MCP 配置 | 在需要 OAuth 的平台点击授权 |
+| 报告目录 | 创建 `temp/`、`reports/`、`output/documents/` | 无需操作 |
+| 验证 | 检查已选平台是否可连接 | 缺权限时补授权 |
 
-### AppsFlyer（仅选择 AppsFlyer 时）
+## 平台凭证
 
-在对应 IDE 的 MCP/OAuth 页面连接：
+只配置你在首次问卷第 1 题选择的平台；没选的平台可以跳过。
+
+各平台凭证从哪里拿、填到哪里，见：[各平台凭证配置指南](PLATFORM-CREDENTIALS.md)。
+
+常见例子：
+
+- Google Ads：Customer ID、Developer Token、Google Cloud 登录凭证。
+- Meta Ads：广告账户 ID 和 Meta MCP OAuth。
+- Adjust：API Token。
+- AppsFlyer：App ID 和 AppsFlyer MCP OAuth。
+- TikTok Ads：Advertiser ID 和官方 MCP / Agentic Hub 授权。
+- Amazon Ads：Profile ID、Amazon Ads API 凭证和 MCP endpoint。
+
+## MCP 安装
+
+用户可以直接说：
 
 ```text
-https://mcp.appsflyer.com/auth/mcp
+帮我安装 MCP 到 Codex
 ```
 
-### LinkedIn / Microsoft Advertising / Reddit（仅选择对应平台时）
-
-这些平台使用自托管 npm MCP。请先确认 Node.js 可用，并按平台 API 要求准备 OAuth / Token。
-
-### TikTok Ads（仅选择 TikTok Ads 时）
-
-使用 TikTok 官方 TikTok Ads MCP Server / Agentic Hub 授权入口。若你的 IDE 需要 URL 方式配置：
-
-```powershell
-$env:TIKTOK_ADS_MCP_URL = "官方提供的 MCP URL"
-```
-
-### Amazon Ads（仅选择 Amazon Ads 时）
-
-Amazon Ads MCP Server 已进入官方 open beta。使用前需要 Amazon Ads API 凭证，以及官方、伙伴或自托管 MCP 端点：
-
-```powershell
-$env:AMAZON_ADS_MCP_URL = "官方或伙伴提供的 MCP URL"
-```
-
-## 第四步：安装 MCP 到你的 IDE
-
-Windows：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Ide all
-```
-
-macOS/Linux：
-
-```bash
-bash scripts/install.sh all
-```
-
-支持的 `-Ide` 值：
+或：
 
 ```text
-cursor | codex | antigravity | trae | qoder | lingma | marscode | claude | claude-desktop | windsurf | vscode | gemini | all
+帮我安装 MCP 到 Trae
 ```
 
-安装脚本会根据 `config/workspace.json` 只生成已选平台的 MCP 配置。
+Agent 会自动选择项目里的安装脚本，并按已启用平台生成配置。
 
-## 第五步：验证连接
+部分 IDE（如 Trae、通义灵码/Qoder、MarsCode）没有稳定的本地配置路径，Agent 会生成可导入的 JSON，并告诉你在 IDE 的 MCP 设置页导入。
 
-在已配置的 IDE 中说：
+完整差异见：[IDE 支持矩阵](IDE-MATRIX.md)。
+
+## 验证连接
+
+配置完成后，对 Agent 说：
 
 ```text
 列出我已连接的平台账户
 ```
 
-也可以只测试你实际选择的平台，例如：
+也可以只验证某个平台：
 
 ```text
 查看 Meta 广告账户列表
@@ -132,7 +72,7 @@ cursor | codex | antigravity | trae | qoder | lingma | marscode | claude | claud
 
 未选择的平台不需要测试。
 
-## 第六步：生成日报
+## 生成日报
 
 对 Agent 说：
 
@@ -140,24 +80,26 @@ cursor | codex | antigravity | trae | qoder | lingma | marscode | claude | claud
 生成昨日营销日报
 ```
 
-手动投递：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\deliver-report.ps1 -Date 2026-06-17
-```
-
-未配置飞书时，会自动在指定目录生成 Word 文档。
+未配置飞书时，Agent 会自动生成本地 Word 文档。配置了飞书 Webhook 时，Agent 会推送到飞书群。
 
 ## 常见问题
 
 **必须装数据库吗？**
+
 不需要。全部使用 JSON 配置、`temp/` 临时数据和 `reports/` 报告文件夹。
 
-**为什么 README 里提到 Google，但我没投 Google？**
-Google 只是一个可选平台。只有你在第 1 题选择 Google Ads 时，才需要配置 Google 相关环境变量。
+**为什么文档里提到 Google，但我没投 Google？**
+
+Google Ads 只是一个可选平台。只有首次问卷选择 Google Ads 时，才需要 Google 相关凭证。
 
 **暂不支持的平台怎么办？**
-见 `docs/AD-PLATFORMS.md` 的“暂不支持”表。那里会说明是没有官方公开 MCP、只有第三方方案，还是处于封闭测试。
+
+见 [平台支持清单](AD-PLATFORMS.md) 的“暂不支持”表。那里会说明是没有官方公开 MCP、只有第三方方案，还是处于封闭测试。
 
 **没配飞书怎么办？**
-不用配置。系统会自动生成本地 DOCX。
+
+不用配置。Agent 会自动生成本地 DOCX。
+
+## 给技术维护者
+
+项目脚本在 `scripts/` 目录，示例配置在 `config/*.example.json`，MCP 核心定义在 `integrations/mcp-servers.core.json`。这些是 Agent 自动化使用的入口，普通投放人员不需要直接运行。
