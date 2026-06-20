@@ -82,9 +82,11 @@ if ($dates.Count -gt 1) {
 Write-Host ""
 Write-Host "若已配置 MCP 全自动流程，Agent 将："
 Write-Host "  1. ensure-temp-dirs → temp 分层子目录"
-Write-Host "  2. 拉数 → temp/raw/{date}/{platform}/{category}/"
-Write-Host "  3. 生成 reports/{date}/"
-Write-Host "  4. 按 delivery.mode 投递"
+Write-Host "  2. 授权健康检查 → token 过期时尝试刷新/重连，最多 3 次"
+Write-Host "  3. 三次失败则停止日报，并通知用户重新授权"
+Write-Host "  4. 拉数 → temp/raw/{date}/{platform}/{category}/"
+Write-Host "  5. 生成 reports/{date}/"
+Write-Host "  6. 按 delivery.mode 投递"
 
 # 计划任务占位：实际生成依赖 IDE Agent + MCP
 # 可扩展为调用 headless 脚本

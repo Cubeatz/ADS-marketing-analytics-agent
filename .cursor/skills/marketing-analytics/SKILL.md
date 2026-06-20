@@ -1,8 +1,8 @@
 ---
 name: marketing-analytics
 description: >-
-  只读营销数据分析工作流：首次配置、MCP 安装、广告/归因平台拉数、日报、素材疲劳、
-  预算建议、归因对比、飞书推送或 DOCX 导出。服务对象是非技术广告投放人员。
+  只读营销数据分析工作流：首次配置、MCP 安装、授权健康检查、广告/归因平台拉数、
+  日报、素材疲劳、预算建议、归因对比、飞书推送或 DOCX 导出。
 disable-model-invocation: false
 ---
 
@@ -13,6 +13,7 @@ disable-model-invocation: false
 - 用户说“首次配置”“初始化”“设置 agent”“帮我装好”
 - `config/workspace.json` 不存在或 onboarding 未完成
 - 用户请求营销日报、素材疲劳、预算建议、归因对比、飞书推送或 DOCX 报告
+- 用户询问 OAuth token 是否过期、定时任务为什么失败、平台授权是否可用
 
 ## 交互原则
 
@@ -43,15 +44,30 @@ disable-model-invocation: false
 
 当前支持平台：Google Ads、Meta Ads、Adjust、AppsFlyer、LinkedIn Ads、Microsoft Advertising、Reddit Ads、TikTok Ads、Amazon Ads。
 
+## 授权健康检查
+
+每次自动拉数、定时日报或批量日报前必须执行授权健康检查。
+
+1. 对每个启用平台做轻量只读检查。
+2. 遇到 token 过期、401/403、invalid_grant、OAuth required 等授权错误时，尝试刷新或重新获取 token。
+3. 最多尝试 3 次。
+4. 每次失败写入 `temp/logs/{date}/auth-check.log`。
+5. 三次内成功则继续拉数。
+6. 三次失败则停止日报，不生成假报告，并明确告诉用户需要重新授权的平台。
+7. 有飞书 webhook 时推送提醒；否则写入 `reports/{date}/auth-failed.md`。
+
+不能绕过平台 OAuth。Refresh token 失效、授权撤销、密码变化或管理员收回权限时，必须用户重新授权。
+
 ## 日报工作流
 
 1. 检查 onboarding 已完成。
 2. 创建当日 `temp/raw|processed|cache|logs|exports` 分层目录。
-3. 读取 workspace 和 accounts，对启用平台通过 MCP 只读拉数。
-4. 原始 JSON 写入 `temp/raw/{date}/{platform}/{category}/`，禁止混放。
-5. 清洗结果写入 `temp/processed/`，日志写入 `temp/logs/{date}/`。
-6. 分析结果写入 `reports/{date}/`。
-7. 按 delivery mode 投递飞书、Word 或 Markdown。
+3. 执行授权健康检查。
+4. 读取 workspace 和 accounts，对启用平台通过 MCP 只读拉数。
+5. 原始 JSON 写入 `temp/raw/{date}/{platform}/{category}/`，禁止混放。
+6. 清洗结果写入 `temp/processed/`，日志写入 `temp/logs/{date}/`。
+7. 分析结果写入 `reports/{date}/`。
+8. 按 delivery mode 投递飞书、Word 或 Markdown。
 
 ## 分析模块
 
@@ -68,14 +84,6 @@ disable-model-invocation: false
 ### 归因差异
 
 使用 `config/field-mapping.json` 对齐字段后，对比平台自报和 MMP 数据。说明可能原因，例如归因窗口、时区、SKAN 延迟、事件映射等。
-
-## 报告投递
-
-统一使用项目投递脚本。逻辑：
-
-1. 飞书 webhook 有效时推送飞书。
-2. 否则生成本地 Word。
-3. 仍需保留 Markdown 报告和结构化摘要。
 
 ## 输出质量
 

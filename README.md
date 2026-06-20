@@ -9,6 +9,21 @@
 - 自动交付：未配置飞书时自动生成本地 Word
 - 多 IDE 支持：Cursor、Codex、Antigravity、Trae、通义灵码/Qoder、Claude、Windsurf、VS Code、Gemini CLI；MarsCode 可手动导入 MCP JSON
 
+## 特色功能
+
+| 功能 | 说明 |
+|---|---|
+| Agent 引导配置 | 用户只要说“帮我完成首次配置”，Agent 自动检查环境、问卷、生成配置和安装 MCP |
+| 多平台只读拉数 | 支持广告投放平台和归因平台，默认不授予写权限 |
+| OAuth 过期保护 | 定时日报前先检查授权；过期后自动尝试恢复 3 次，失败就停止并提醒用户 |
+| temp 分层管理 | 原始数据、清洗数据、缓存、日志、导出文件分目录保存，不混放 |
+| 本地 Word 报告 | 不配置飞书也能自动生成 DOCX |
+| 飞书提醒 | 可推送日报，也可在授权失败时提醒重新授权 |
+| 素材疲劳分析 | 根据 frequency、CTR 变化等指标识别疲劳素材 |
+| 预算建议 | 根据预算利用率、CPA、展示损失等指标给出文字建议 |
+| 归因差异对比 | 对比平台自报和 MMP 数据，解释归因窗口、时区、SKAN 等差异 |
+| 多 IDE 支持 | Codex、Cursor、Trae、Qoder、Antigravity、Claude、Windsurf、VS Code、Gemini CLI 等 |
+
 ## 你只要这样说
 
 | 你想做什么 | 对 Agent 说 |

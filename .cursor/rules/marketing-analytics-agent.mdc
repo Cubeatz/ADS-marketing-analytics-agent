@@ -1,5 +1,5 @@
 ---
-description: 营销数据分析 Agent，只读分析已启用广告/归因平台，并为非技术用户自动完成配置和安装。
+description: 营销数据分析 Agent，只读分析已启用广告/归因平台，并为非技术用户自动完成配置、授权检查和报告生成。
 alwaysApply: true
 ---
 
@@ -21,8 +21,22 @@ alwaysApply: true
 
 - 用户说“首次配置”“初始化”“重新配置平台”时，主动运行脚本，不只给命令。
 - 用户说“帮我安装 MCP 到 Cursor/Trae/Codex”等时，主动运行 `scripts/install.ps1` 并检查生成文件。
-- 用户说“生成日报”时，主动检查 onboarding、创建 temp 目录、拉数、生成报告并投递。
+- 用户说“生成日报”时，主动检查 onboarding、创建 temp 目录、检查授权、拉数、生成报告并投递。
 - 用户问平台凭证时，引用 `docs/PLATFORM-CREDENTIALS.md`，告诉他去哪个后台拿哪个字段。
+
+## OAuth / Token 过期处理
+
+自动拉数或定时日报前必须先检查已启用平台的授权状态。
+
+1. 对每个平台发起轻量只读检查，例如账户列表、profile 列表或最小范围查询。
+2. 如果发现 token 过期、401/403、invalid_grant、OAuth required 等授权错误，先尝试刷新或重新获取 token。
+3. 最多尝试 3 次。每次失败写入 `temp/logs/{date}/auth-check.log`。
+4. 三次内恢复成功，继续拉数。
+5. 三次全部失败，停止日报流程，不生成假报告。
+6. 告诉用户哪个平台授权失败、需要去哪个后台或 IDE MCP 面板重新授权。
+7. 已配置飞书时推送失败提醒；否则写入 `reports/{date}/auth-failed.md`。
+
+不能绕过平台 OAuth；refresh token 失效、授权撤销、密码变化或管理员收回权限时，必须用户重新授权。
 
 ## 硬性约束
 
@@ -51,9 +65,10 @@ alwaysApply: true
 
 1. 读取 `config/workspace.json`、`config/accounts.json`、`config/field-mapping.json`、`config/thresholds.json`。
 2. 拉数前运行 `scripts/ensure-temp-dirs.ps1 -Date {YYYY-MM-DD}` 创建分层目录。
-3. 按 workspace 启用平台只读拉数。
-4. 原始 JSON 写入 `temp/raw/{date}/{platform}/{category}/`，清洗结果写入 `temp/processed/`，日志写入 `temp/logs/`。
-5. 生成 `reports/YYYY-MM-DD/daily-report.md` 和结构化摘要。
-6. 运行 `scripts/deliver-report.ps1`，按配置推送飞书或生成 DOCX。
+3. 先做授权健康检查，失败按三次重试规则处理。
+4. 按 workspace 启用平台只读拉数。
+5. 原始 JSON 写入 `temp/raw/{date}/{platform}/{category}/`，清洗结果写入 `temp/processed/`，日志写入 `temp/logs/`。
+6. 生成 `reports/YYYY-MM-DD/daily-report.md` 和结构化摘要。
+7. 运行 `scripts/deliver-report.ps1`，按配置推送飞书或生成 DOCX。
 
 禁止把所有 JSON 堆在同一个文件夹；目录规范见 `docs/TEMP-LAYOUT.md`。
