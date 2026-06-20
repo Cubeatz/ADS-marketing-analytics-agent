@@ -1,94 +1,51 @@
 # 营销数据分析 Agent
 
-面向非技术广告投放人员的只读数据分析 Agent。它不会改广告账户，只帮助你拉取所选平台的数据、整理日报，并输出本地 Word 或飞书消息。
+这是给广告投放人员用的只读数据分析 Agent。你不需要懂命令行，也不需要安装数据库。你只要告诉 Agent 想看哪些平台、想要什么日报，Agent 会自动完成检查、配置、拉数、整理和投递。
 
 当前可选平台：Google Ads、Meta Ads、Adjust、AppsFlyer、LinkedIn Ads、Microsoft Advertising、Reddit Ads、TikTok Ads、Amazon Ads。
 
-- 无数据库：使用 JSON 配置、`temp/` 临时数据和 `reports/` 报告文件夹
-- 只读分析：默认不授权写入广告账户
-- 日报交付：未配置飞书时自动生成 DOCX
-- 多 IDE 支持：Cursor、Codex、Antigravity、Trae、通义灵码/Qoder、Claude、Windsurf、VS Code、Gemini CLI；MarsCode 生成手动 MCP JSON
+- 只读分析：不会改广告账户、预算、素材或 campaign
+- 无数据库：使用本地配置、临时数据目录和报告文件夹
+- 自动交付：未配置飞书时自动生成本地 Word
+- 多 IDE 支持：Cursor、Codex、Antigravity、Trae、通义灵码/Qoder、Claude、Windsurf、VS Code、Gemini CLI；MarsCode 可手动导入 MCP JSON
+
+## 你只要这样说
+
+| 你想做什么 | 对 Agent 说 |
+|---|---|
+| 第一次使用 | “帮我完成首次配置” |
+| 不知道平台凭证从哪里拿 | “告诉我 Meta / Google / TikTok 的配置从哪里来” |
+| 换一组广告平台 | “重新配置平台” |
+| 配置当前 IDE 的 MCP | “帮我安装 MCP 到这个 IDE” |
+| 生成日报 | “生成昨日营销日报” |
+| 生成某几天日报 | “生成 2026-06-17 到 2026-06-19 的营销日报” |
+| 设置每天自动日报 | “帮我配置每天早上 9 点自动生成日报” |
+
+Agent 应该自动运行项目里的检查、问卷、安装、目录创建和报告脚本。除非系统权限不允许，否则不会让非技术用户自己复制命令。
+
+## 第一次使用时会发生什么
+
+你说“帮我完成首次配置”后，Agent 会自动：
+
+1. 检查本机 Python、Node.js、pipx 等基础环境。
+2. 用问卷确认你实际使用的平台、报告方式、数据目录、货币和飞书设置。
+3. 根据已选平台生成 MCP 配置。
+4. 告诉你每个平台还缺哪些 OAuth / API Token。
+5. 创建 `temp/`、`reports/`、`output/documents/` 等目录。
+6. 验证配置是否完整。
+
+你只需要准备平台账户权限。各平台凭证从哪里拿、填到哪里，看这里：[各平台凭证配置指南](docs/PLATFORM-CREDENTIALS.md)。
 
 ## 先看哪里
 
 | 你现在要做什么 | 直接看这里 |
 |---|---|
-| 第一次使用，想一步步装好 | [首次使用](#首次使用) |
-| 不知道各平台 token、账户 ID 从哪来 | [各平台凭证配置指南](docs/PLATFORM-CREDENTIALS.md) |
-| 想知道支持哪些广告平台，哪些暂不支持 | [平台支持清单](docs/AD-PLATFORMS.md) |
-| 想知道自己的 IDE 怎么配 MCP | [IDE 支持矩阵](docs/IDE-MATRIX.md) |
-| 想部署到另一台电脑或远端机器 | [远端部署指南](docs/SETUP.md) |
-| 想配置每天自动跑日报 | [定时任务配置](docs/SCHEDULED-TASKS.md) |
-| 想了解 temp、reports 文件怎么放 | [临时数据目录规范](docs/TEMP-LAYOUT.md) |
-
-## 首次使用
-
-首次使用请运行一键启动，它会依次完成环境检查、问卷配置和 MCP 安装：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\start.ps1
-```
-
-如果你只想跑问卷：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\onboard.ps1
-```
-
-问卷第 1 题只选择你实际投放或归因使用的平台。后续只需要配置已选平台的 OAuth / API Token，不需要为了示例去设置 Google 环境变量。
-
-也可以在对话里一次性回复，例如：
-
-```text
-1AB 2A 3A 7A 8A 9A
-```
-
-表示：选择 Google + Meta、一次性使用、本地 Word、桌面目录、USD、不使用飞书。每题 A 是推荐默认，Z/跳过等同于 A。
-
-## 快速开始
-
-```powershell
-# 1. 运行首次配置，选择实际需要的平台
-powershell -ExecutionPolicy Bypass -File scripts\start.ps1
-
-# 2. 按已选平台补全 OAuth / API Token
-#    具体从哪里拿、填到哪里：docs/PLATFORM-CREDENTIALS.md
-#    只有选择 Google Ads 时，才需要 Google Ads 环境变量。
-
-# 3. 安装到你实际使用的 IDE
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Ide codex
-# 也可使用 -Ide cursor / trae / qoder / antigravity / all
-
-# 4. 重启 IDE，完成所选平台的 OAuth / API Token 配置
-# 5. 对 Agent 说：生成昨日营销日报
-```
-
-macOS/Linux：
-
-```bash
-bash scripts/install.sh codex
-```
-
-平台凭证说明请直接看：[各平台配置从哪里来](docs/PLATFORM-CREDENTIALS.md)。
-
-## 支持的 IDE
-
-| IDE | 安装命令 | 说明 |
-|-----|---------|------|
-| Codex | `install.ps1 -Ide codex` | 使用项目级 `.codex/config.toml` |
-| Antigravity | `install.ps1 -Ide antigravity` | HTTP MCP 使用 `serverUrl` |
-| Cursor | `install.ps1 -Ide cursor` | 使用 `.cursor/mcp.json` 和 `.cursor/rules/` |
-| Trae / Trae CN | `install.ps1 -Ide trae` | 生成可手动导入的 MCP JSON |
-| 通义灵码 / Qoder CN | `install.ps1 -Ide qoder` 或 `-Ide lingma` | 生成可手动导入的 MCP JSON |
-| Claude Desktop | `install.ps1 -Ide claude-desktop` | 写入 Claude Desktop 配置 |
-| Claude Code | `install.ps1 -Ide claude` | 写入 Claude Code 配置 |
-| Windsurf | `install.ps1 -Ide windsurf` | 写入 Windsurf 配置 |
-| VS Code | `install.ps1 -Ide vscode` | 写入 `.vscode/mcp.json` |
-| Gemini CLI | `install.ps1 -Ide gemini` | 写入 Gemini 配置 |
-| MarsCode | `install.ps1 -Ide marscode` | 生成 `integrations/marscode/mcp.json`，有 MCP 入口时手动导入 |
-| ChatGPT | 手动 | 见 [ChatGPT MCP 说明](integrations/chatgpt.md) |
-
-完整对照表见：[IDE 支持矩阵](docs/IDE-MATRIX.md)。
+| 各平台 token、账户 ID 从哪里来 | [各平台凭证配置指南](docs/PLATFORM-CREDENTIALS.md) |
+| 支持哪些广告平台，哪些暂不支持 | [平台支持清单](docs/AD-PLATFORMS.md) |
+| 自己的 IDE 怎么配 MCP | [IDE 支持矩阵](docs/IDE-MATRIX.md) |
+| 部署到另一台电脑或远端机器 | [远端部署指南](docs/SETUP.md) |
+| 每天自动跑日报 | [定时任务配置](docs/SCHEDULED-TASKS.md) |
+| temp、reports 文件怎么放 | [临时数据目录规范](docs/TEMP-LAYOUT.md) |
 
 ## 支持的平台
 
@@ -106,27 +63,23 @@ bash scripts/install.sh codex
 
 暂不支持的平台和原因见：[平台支持清单](docs/AD-PLATFORMS.md)。
 
-## 目录结构
+## 支持的 IDE
 
-```text
-marketing-analytics-agent/
-├─ AGENTS.md
-├─ config/
-│  ├─ workspace.example.json
-│  └─ accounts.example.json
-├─ temp/
-│  ├─ raw/{date}/{platform}/{category}/
-│  ├─ processed/
-│  ├─ cache/
-│  ├─ logs/
-│  └─ exports/
-├─ output/documents/
-├─ reports/
-├─ docs/
-├─ scripts/
-├─ integrations/
-└─ .cursor/rules/
-```
+| IDE | 说明 |
+|-----|------|
+| Codex | 自动生成项目级 `.codex/config.toml` |
+| Antigravity | 自动生成 Antigravity MCP 配置，HTTP MCP 使用 `serverUrl` |
+| Cursor | 自动生成 `.cursor/mcp.json`，并使用 `.cursor/rules/` |
+| Trae / Trae CN | 生成可手动导入的 MCP JSON |
+| 通义灵码 / Qoder CN | 生成可手动导入的 MCP JSON |
+| Claude Desktop / Claude Code | 写入对应 MCP 配置 |
+| Windsurf | 写入 Windsurf MCP 配置 |
+| VS Code | 写入 `.vscode/mcp.json` |
+| Gemini CLI | 写入 Gemini 配置 |
+| MarsCode | 生成 `integrations/marscode/mcp.json`，有 MCP 入口时手动导入 |
+| ChatGPT | 见 [ChatGPT MCP 说明](integrations/chatgpt.md) |
+
+完整对照表见：[IDE 支持矩阵](docs/IDE-MATRIX.md)。
 
 ## 文档
 
@@ -143,9 +96,6 @@ marketing-analytics-agent/
 | [架构与数据流](docs/ARCHITECTURE.md) | 项目架构与数据流 |
 | [MCP 选型理由](docs/MCP-SELECTION.md) | MCP 选择依据 |
 
-## 常用指令
+## 给技术人员
 
-- “生成昨日营销日报”
-- “分析 Meta 素材疲劳”
-- “对比投放平台自报数据和归因平台差异”
-- “哪些 campaign 预算利用率超过 90%？”
+如果你需要手动排障，脚本在 `scripts/` 目录，MCP 模板在 `integrations/` 目录，示例配置在 `config/*.example.json`。普通广告投放用户不需要直接运行这些命令。
